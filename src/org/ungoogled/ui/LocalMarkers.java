@@ -3,7 +3,6 @@ package org.ungoogled.ui;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.graphics.Canvas;
-import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -209,7 +208,10 @@ public final class LocalMarkers {
     }
     private static final class MarkerButton extends View {
         static final int[] ICONS={0x7f080587,0x7f08063a,0x7f08056a,0x7f08060b,0x7f08056f,0x7f080515};
-        static final int[] COLORS={0xff4285f4,0xff4285f4,0xffd93065,0xffa56a00,0xff188038,0xff1967d2};
+        // Soft category colors and dark glyphs blend with Maps' night-mode POIs.
+        // Only the drawing shrinks; the 44 dp accessible/touch target is unchanged.
+        static final int[] COLORS={0xffadc6ff,0xffadc6ff,0xffefa6d3,0xfff6c178,0xff9ec9a6,0xffadc6ff};
+        static final int INK=0xff1b2638, RIM=0xff65758c;
         final Controller owner;final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
         List<Entry> members=new ArrayList<>();Drawable icon;int style=-1,count;
         MarkerButton(Controller c){super(c.activity);owner=c;setClickable(true);setFocusable(true);setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_YES);setOnClickListener(v->owner.open(new ArrayList<>(members)));}
@@ -217,17 +219,17 @@ public final class LocalMarkers {
             members=next;String label=next.size()==1?next.get(0).title+", saved place":next.size()+" saved places near "+next.get(0).title;
             if(!label.contentEquals(getContentDescription()==null?"":getContentDescription()))setContentDescription(label);
             int s=next.size()>1?5:next.get(0).style;boolean changed=style!=s||count!=next.size();
-            if(style!=s){style=s;icon=getContext().getDrawable(ICONS[s]).mutate();icon.setTint(Color.WHITE);}
+            if(style!=s){style=s;icon=getContext().getDrawable(ICONS[s]).mutate();icon.setTint(INK);}
             count=next.size();if(changed)invalidate();
         }
         protected void drawableStateChanged(){super.drawableStateChanged();invalidate();}
         protected void onDraw(Canvas canvas) {
             float d=owner.density,x=getWidth()/2f,y=getHeight()/2f;paint.setStyle(Paint.Style.FILL);
-            paint.setColor(0x40000000);canvas.drawCircle(x,y+d,15*d,paint);
-            paint.setColor(Color.WHITE);canvas.drawCircle(x,y,14*d,paint);
-            paint.setColor(COLORS[Math.max(0,style)]);canvas.drawCircle(x,y,12.5f*d,paint);
-            if(count>1){paint.setColor(Color.WHITE);paint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);paint.setTextAlign(Paint.Align.CENTER);paint.setTextSize((count>99?9:12)*d);canvas.drawText(count>999?"999+":String.valueOf(count),x,y-(paint.ascent()+paint.descent())/2,paint);}
-            else if(icon!=null){int s=Math.round(9*d);icon.setBounds((int)x-s,(int)y-s,(int)x+s,(int)y+s);icon.draw(canvas);}
+            paint.setColor(0x30000000);canvas.drawCircle(x,y+d,12.5f*d,paint);
+            paint.setColor(RIM);canvas.drawCircle(x,y,12*d,paint);
+            paint.setColor(COLORS[Math.max(0,style)]);canvas.drawCircle(x,y,10*d,paint);
+            if(count>1){paint.setColor(INK);paint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);paint.setTextAlign(Paint.Align.CENTER);paint.setTextSize((count>99?8:11)*d);canvas.drawText(count>999?"999+":String.valueOf(count),x,y-(paint.ascent()+paint.descent())/2,paint);}
+            else if(icon!=null){int s=Math.round(7.5f*d);icon.setBounds((int)x-s,(int)y-s,(int)x+s,(int)y+s);icon.draw(canvas);}
             if(isPressed()||isFocused()){paint.setColor(0x554285f4);canvas.drawCircle(x,y,21*d,paint);}
         }
     }
