@@ -32,8 +32,11 @@ final class MarkerGeometry {
         Map<Long, List<Group>> cells = new HashMap<>();
         float radius = spacing / 2, squared = spacing * spacing;
         for (Point p : points) {
+            // Keep partially visible markers; the overlay clips them at the screen edge.
+            // Removing them when their first edge crosses the viewport makes them pop.
             if (!Float.isFinite(p.x) || !Float.isFinite(p.y)
-                    || p.x < radius || p.y < radius || p.x > width - radius || p.y > height - radius) continue;
+                    || p.x + radius <= 0 || p.y + radius <= 0
+                    || p.x - radius >= width || p.y - radius >= height) continue;
             int cx = (int) Math.floor(p.x / spacing), cy = (int) Math.floor(p.y / spacing);
             Group nearest = null; float distance = squared;
             for (int dx = -1; dx <= 1; dx++) for (int dy = -1; dy <= 1; dy++) {
