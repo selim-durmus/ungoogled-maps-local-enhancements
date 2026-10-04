@@ -1,4 +1,4 @@
-# Ungoogled Maps Home/Work shortcuts
+# Ungoogled Maps Home/Work shortcuts and local markers
 
 A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) that adds Home and Work beside Maps' top category buttons and clears the temporary coordinate selection when returning from a shortcut route.
 
@@ -13,7 +13,9 @@ This repository preserves the working source and a repeatable build process. It 
 - On Back from a shortcut route, dismisses only the matching temporary coordinate selection using Maps' native clear action.
 - Leaves ordinary searches and active navigation alone; writes no saved-place data and adds no network client.
 
-No ETA labels or saved-place map markers are included.
+The marker extension reads Local saved, draws Home/Work and saved-list icons using Maps' projection, and opens a place when tapped. Nearby points form a numbered marker with a place chooser. Markers follow pan, zoom, rotation and tilt, and refresh after saves change. Position updates run on Android display frames rather than a 33 ms timer; saved-store refresh remains once per second. This improves motion alignment but remains a separate overlay, so exact compositor synchronization is not guaranteed. They are shown on the main browse map and hidden on route/navigation and place-detail screens.
+
+The `v1.0.0` tag preserves the original Home/Work-only checkpoint. This branch adds markers without changing `HomeWorkShortcuts.java`. No ETA labels are included. The local layer does not reproduce Google's native label collision, building occlusion, or account-backed saved layer.
 
 ## Supported baseline
 
@@ -52,8 +54,8 @@ The password file contains the keystore password. If the key password differs, a
 The tool:
 
 1. Checks package/version, the local-saved class signatures, and absence of this extension.
-2. Decodes code while keeping resources raw and adds three lifecycle calls.
-3. Compiles the unchanged helper and runs twelve coordinate-ownership checks. Compile-time stubs and tests are excluded from the helper DEX.
+2. Decodes code while keeping resources raw and adds both helpers to the three lifecycle callbacks.
+3. Compiles the helpers and runs twelve coordinate-ownership checks plus marker grouping checks. Compile-time stubs and tests are excluded from the helper DEX.
 4. Rebuilds the lifecycle DEX, copies only that DEX into the original APK, and appends the helper as the next DEX.
 5. Verifies all other original APK entry contents are preserved, aligns for 16 KB native-library pages, signs, checks the certificate, and writes an APK and verification report under `dist/`.
 
@@ -72,7 +74,7 @@ Back up Local saved using its export feature and retain the previous working APK
 After checking the APK on an emulator, install an in-place update:
 
 ```powershell
-adb -s YOUR_DEVICE_SERIAL install --no-incremental -r .\dist\ungoogled-maps-home-work.apk
+adb -s YOUR_DEVICE_SERIAL install --no-incremental -r .\dist\ungoogled-maps-local-markers.apk
 ```
 
 Do not uninstall or clear app data as part of this process. If Android reports a signature mismatch, resolve the signing key instead.
@@ -91,6 +93,6 @@ APK bytes may differ across rebuilds because packaging/signing metadata can diff
 
 ## Repository contents and license
 
-`src/` contains the extension, `stubs/` contains compile-time signatures only, `tests/` contains coordinate-ownership checks, and `build.py` performs the post-patch build. APKs, decompiled Maps classes, Google resources, signing material, private places, and device screenshots are excluded.
+`src/` contains the extension, `stubs/` contains compile-time signatures only, `tests/` contains coordinate-ownership and marker geometry checks, and `build.py` performs the post-patch build. APKs, decompiled Maps classes, Google resources, signing material, private places, and device screenshots are excluded.
 
 GPL-3.0; see [LICENSE](LICENSE). The extension depends on local-saved functionality from bearinmindcat's GPL-licensed Morphe patches. This project is independent of Google and the upstream publisher and is not an endorsement by either.

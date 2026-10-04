@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add the version-pinned Home/Work extension to an already patched Maps APK.
+"""Add Home/Work shortcuts and local map markers to an already patched Maps APK.
 
 Uses only the Python standard library; external dependencies are documented in README.
 No download, installation, key generation, or device-data operations are performed.
@@ -47,6 +47,7 @@ def lifecycle_hooks(text):
         match = matches[0]
         body = match.group("body")
         call = "    invoke-static {p1}, " + HOOK + "->" + method + "(Landroid/app/Activity;)V"
+        call += "\n    invoke-static {p1}, Lorg/ungoogled/ui/LocalMarkers;->" + method + "(Landroid/app/Activity;)V"
         updated, count = re.subn(r"(?m)^(    \.locals \d+)[ \t]*$", r"\1\n\n" + call,
                                  body, count=1)
         if count != 1:
@@ -72,7 +73,7 @@ def certificates(java, apksigner, apk):
 
 
 def jar_classes(destination, classes, pattern):
-    files = sorted(classes.rglob(pattern))
+    files = sorted(p for pat in pattern.split("|") for p in classes.rglob(pat))
     if not files:
         raise ValueError("No compiled classes for " + pattern)
     with zipfile.ZipFile(destination, "w") as archive:
@@ -90,7 +91,7 @@ def main():
     parser.add_argument("--java", default="java")
     parser.add_argument("--javac", default="javac")
     parser.add_argument("--work-dir", type=Path, default=ROOT / "build")
-    parser.add_argument("--output", type=Path, default=ROOT / "dist/ungoogled-maps-home-work.apk")
+    parser.add_argument("--output", type=Path, default=ROOT / "dist/ungoogled-maps-local-markers.apk")
     parser.add_argument("--keystore", type=Path, required=True)
     parser.add_argument("--password-file", type=Path, required=True,
                         help="Keystore password file; do not put passwords on command line")
@@ -143,9 +144,12 @@ def main():
     checks = {
         "SavedStore.smali": (".field static home:Lorg/ungoogled/ui/SavedStore$Place;",
                              ".field static work:Lorg/ungoogled/ui/SavedStore$Place;",
-                             ".method static declared-synchronized load(Landroid/content/Context;)V"),
-        "SavedStore$Place.smali": (".field lat:D", ".field lng:D"),
-        "SavedPlaces.smali": (".method static directions(Landroid/content/Context;Lorg/ungoogled/ui/SavedStore$Place;)V",),
+                             ".method static declared-synchronized load(Landroid/content/Context;)V",
+                             ".method static declared-synchronized allSaved()Ljava/util/List;"),
+        "SavedStore$Place.smali": (".field lat:D", ".field lng:D", ".field name:Ljava/lang/String;",
+                                  ".field ftid:Ljava/lang/String;", ".field final lists:Ljava/util/Set;"),
+        "SavedPlaces.smali": (".method static directions(Landroid/content/Context;Lorg/ungoogled/ui/SavedStore$Place;)V",
+                              ".method static open(Landroid/content/Context;Lorg/ungoogled/ui/SavedStore$Place;)V"),
     }
     for name, signatures in checks.items():
         text = (front.parent / name).read_text(encoding="utf-8")
@@ -162,7 +166,8 @@ def main():
     sources = sorted(p for folder in ("src", "stubs", "tests") for p in (ROOT / folder).rglob("*.java"))
     run(args.javac, "--release", "8", "-cp", android, "-d", classes, *sources)
     run(args.java, "-cp", str(classes) + os.pathsep + str(android), "org.ungoogled.ui.RouteGuardTest")
-    jar_classes(work / "helper.jar", classes, "HomeWorkShortcuts*.class")
+    run(args.java, "-cp", classes, "org.ungoogled.ui.MarkerGeometryTest")
+    jar_classes(work / "helper.jar", classes, "HomeWorkShortcuts*.class|LocalMarkers*.class|MarkerGeometry.class|MarkerGeometry$*.class")
     jar_classes(work / "stubs.jar", classes, "Saved*.class")
     dex_dir = work / "helper-dex"
     dex_dir.mkdir()
@@ -180,7 +185,7 @@ def main():
             for entry in original.infolist():
                 if SIGNATURE.fullmatch(entry.filename):
                     continue
-                data = rebuilt.read(target_dex) if entry.filename == target_dex else original.read(entry.filename)
+                data = rebuilt.read(entry.filename) if entry.filename == target_dex else original.read(entry.filename)
                 patched.writestr(copy.copy(entry), data)
             patched.write(dex_dir / "classes.dex", extra, compress_type=zipfile.ZIP_DEFLATED)
         with zipfile.ZipFile(unsigned) as patched:
@@ -205,6 +210,7 @@ def main():
               "output_sha256": sha256(args.output), "certificate_sha256": output_certs,
               "modified_original_classes": changed, "replaced_apk_entries": [target_dex],
               "added_apk_entries": [extra], "route_ownership_checks": 12,
+              "marker_geometry_10000_points": "passed",
               "installed": False, "runtime_verified": False}
     args.output.with_suffix(".verification.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("Built:", args.output)
