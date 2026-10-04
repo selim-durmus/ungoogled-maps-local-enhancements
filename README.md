@@ -1,6 +1,6 @@
-# Ungoogled Maps Home/Work shortcuts and local markers
+# Ungoogled Maps Local Enhancements
 
-A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) that adds Home and Work beside Maps' top category buttons and clears the temporary coordinate selection when returning from a shortcut route.
+A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) containing both native Home/Work shortcuts and saved-place map markers. The shortcuts clear their temporary coordinate selection on return; the markers support taps, grouping, smooth movement, natural edge clipping, and icons styled for dark maps.
 
 This repository preserves the working source and a repeatable build process. It is a standalone post-patch tool, **not an importable Morphe patch bundle**. Apply the original publisher's patches first, then apply this extension to that APK on a PC.
 
