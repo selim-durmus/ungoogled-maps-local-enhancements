@@ -1,0 +1,96 @@
+# Ungoogled Maps Home/Work shortcuts
+
+A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) that adds Home and Work beside Maps' top category buttons and clears the temporary coordinate selection when returning from a shortcut route.
+
+This repository preserves the working source and a repeatable build process. It is a standalone post-patch tool, **not an importable Morphe patch bundle**. Apply the original publisher's patches first, then apply this extension to that APK on a PC.
+
+## Features
+
+- Reads Home/Work from the existing Local saved store. Only configured destinations appear.
+- Uses Maps' actual Material Chip widget, live category styling, and bundled Home/Work icons.
+- Keeps the category carousel scrollable beside the shortcuts.
+- Uses the existing local-saved directions action.
+- On Back from a shortcut route, dismisses only the matching temporary coordinate selection using Maps' native clear action.
+- Leaves ordinary searches and active navigation alone; writes no saved-place data and adds no network client.
+
+No ETA labels or saved-place map markers are included.
+
+## Supported baseline
+
+| Component | Tested value |
+| --- | --- |
+| Maps | `26.36.04.973607363` / version code `1068763346` |
+| Package | `org.ungoogled.android.apps.maps` |
+| Upstream patches | v1.3.0, commit [`35421159`](https://github.com/bearinmindcat/morphe-patches/tree/35421159e2149d1ca972ffd0f16b79666569035c) |
+| Java | JDK 17; helper targets Java 8 |
+| Python | 3.11+; standard library only |
+| Android SDK | Platform 36, Build Tools 36.0.0 |
+| Apktool | 3.0.3 |
+
+**A newer Maps version requires porting and testing.** The code uses version-specific resource IDs and obfuscated Chip internals. The build rejects a different Maps version; do not simply remove that check. Even changes to upstream patches on the same Maps version require review and a device smoke test. See [maintenance instructions](docs/MAINTENANCE.md).
+
+## Build
+
+Install Python, a JDK with `java` and `javac` on PATH, the Android SDK components above, and the Apktool JAR. Obtain the original Maps APK and patch it with the publisher's Morphe patches, including local saved places and the package name above. Use that fresh output as input; do not feed this extension's own output back into the tool.
+
+Keep the original signing key and its password outside Git. To install over an existing copy while preserving app data, the result must use that copy's signing key. The build verifies that the output and input certificates match. Signing keys are not recoverable from an APK or this repository.
+
+PowerShell example, from the repository root (replace placeholder paths):
+
+```powershell
+python .\build.py `
+  --input 'C:\path\ungoogled-maps-upstream.apk' `
+  --apktool 'C:\tools\apktool_3.0.3.jar' `
+  --sdk 'C:\path\Android\Sdk' `
+  --keystore 'C:\private\maps-signing.p12' `
+  --password-file 'C:\private\signing-password.txt' `
+  --key-alias morphe
+```
+
+The password file contains the keystore password. If the key password differs, add `--key-password-file` with a separate file. Paths are examples; no key or password is bundled. `--sdk` can instead come from `ANDROID_SDK_ROOT` or `ANDROID_HOME`.
+
+The tool:
+
+1. Checks package/version, the local-saved class signatures, and absence of this extension.
+2. Decodes code while keeping resources raw and adds three lifecycle calls.
+3. Compiles the unchanged helper and runs twelve coordinate-ownership checks. Compile-time stubs and tests are excluded from the helper DEX.
+4. Rebuilds the lifecycle DEX, copies only that DEX into the original APK, and appends the helper as the next DEX.
+5. Verifies all other original APK entry contents are preserved, aligns for 16 KB native-library pages, signs, checks the certificate, and writes an APK and verification report under `dist/`.
+
+Build products stay in `build/`; the script refuses to overwrite an existing work directory or output. For another build, use fresh paths:
+
+```powershell
+python .\build.py <same arguments> --work-dir .\build-next --output .\dist\maps-next.apk
+```
+
+Keep custom build directories outside Git or add them to `.gitignore` before building. The default `build/` and `dist/` are already ignored. There are no automatic downloads or device installation steps.
+
+## Install and verify
+
+Back up Local saved using its export feature and retain the previous working APK before replacing it. Keep a separate secure backup of the original signing key and password; they are intentionally not in this repository.
+
+After checking the APK on an emulator, install an in-place update:
+
+```powershell
+adb -s YOUR_DEVICE_SERIAL install --no-incremental -r .\dist\ungoogled-maps-home-work.apk
+```
+
+Do not uninstall or clear app data as part of this process. If Android reports a signature mismatch, resolve the signing key instead.
+
+Check Home/Work appearance, both destinations, category scrolling, Back cleanup, an ordinary search followed by Directions/Back, and active navigation. Use `adb logcat -s UA-HomeWork` to inspect extension errors. The existing twelve Java checks verify coordinate matching only; they do not replace UI tests.
+
+## Preserved working checkpoint
+
+- Helper source SHA-256: `fcc62f1c8f47ca46eedbd9850348cfabee2a57c1eddd46e9081dba2a0e34480e` (original file bytes before Git line-ending normalization).
+- Installed working APK SHA-256: `62dbb34ae8b7e6f84b7fe87d9bbec2ca6517a42748c68de0974a5c9c43af4490`.
+- [Installed-build verification](docs/installed-build-verification.json) records the earlier emulator and Pixel checks. These are historical observations for that exact build, not a guarantee for a newly patched APK.
+- [Portable rebuild verification](docs/rebuild-verification.json) records a successful build with this repository's tool. Every ZIP entry in that rebuilt APK was byte-identical to the installed checkpoint, including `classes.dex` and `classes12.dex`; the overall APK hash differs because of container metadata. The phone was not reinstalled during this preservation step.
+- The original lifecycle change is recorded in [lifecycle-hooks.diff](patches/lifecycle-hooks.diff).
+
+APK bytes may differ across rebuilds because packaging/signing metadata can differ. The preserved Java implementation is the working version; rebuilding does not modify the installed app until you install the result yourself.
+
+## Repository contents and license
+
+`src/` contains the extension, `stubs/` contains compile-time signatures only, `tests/` contains coordinate-ownership checks, and `build.py` performs the post-patch build. APKs, decompiled Maps classes, Google resources, signing material, private places, and device screenshots are excluded.
+
+GPL-3.0; see [LICENSE](LICENSE). The extension depends on local-saved functionality from bearinmindcat's GPL-licensed Morphe patches. This project is independent of Google and the upstream publisher and is not an endorsement by either.
