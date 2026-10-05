@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add Home/Work shortcuts and local map markers to an already patched Maps APK.
+"""Add Home/Work shortcuts, local map markers and labels to a patched Maps APK.
 
 Uses only the Python standard library; external dependencies are documented in README.
 No download, installation, key generation, or device-data operations are performed.
@@ -54,6 +54,64 @@ def lifecycle_hooks(text):
             raise ValueError("Unsupported lifecycle register declaration: " + event)
         text = text[:match.start("body")] + updated + text[match.end("body"):]
     return text
+
+
+def label_hooks(decoded):
+    bindings = {
+        "atqs.smali": (".field public final a:Lnxb;", ".field public l:Lawvj;"),
+        "atlg.smali": (".field public final a:Ljava/lang/Object;",),
+        "awvj.smali": (".method public final declared-synchronized a()Ljava/io/Serializable;",),
+        "oku.smali": (".method public final bz()Ljava/lang/String;", ".method public final p()Lbjap;", ".method public final q()Lbjaw;"),
+    }
+    for name, signatures in bindings.items():
+        paths = list(decoded.glob("smali*/" + name))
+        if len(paths) != 1 or not all(s in paths[0].read_text(encoding="utf-8") for s in signatures):
+            raise ValueError("Native label binding changed: " + name)
+    native = list(decoded.glob("smali*/atqq.smali"))
+    chip = list(decoded.glob("smali*/areb.smali"))
+    you = list(decoded.glob("smali*/org/ungoogled/ui/YouActivity.smali"))
+    if len(native) != 1 or len(chip) != 1 or len(you) != 1:
+        raise ValueError("Label action classes changed")
+    text = native[0].read_text(encoding="utf-8")
+    anchor = ".method public final a(Lbcio;)V\n    .locals 8"
+    if text.count(anchor) != 1 or ".field public final synthetic a:Latqs;" not in text:
+        raise ValueError("Native label action ABI changed")
+    hook = """
+
+    iget-object v0, p0, Latqq;->a:Latqs;
+    invoke-static {v0}, Lorg/ungoogled/ui/LocalLabels;->editNative(Ljava/lang/Object;)Z
+    move-result v0
+    if-eqz v0, :ua_original_label
+    return-void
+    :ua_original_label
+"""
+    native[0].write_text(text.replace(anchor,anchor+hook),encoding="utf-8",newline="\n")
+    text = chip[0].read_text(encoding="utf-8")
+    anchor = "    check-cast v1, Latlg;"
+    if text.count(anchor) != 1 or ".method public final onClick(Landroid/view/View;)V\n    .locals 9" not in text:
+        raise ValueError("Native place-sheet label action ABI changed")
+    hook = """
+
+    iget-object v0, v1, Latlg;->a:Ljava/lang/Object;
+    iget-object v2, p0, Lareb;->c:Ljava/lang/Object;
+    invoke-static {v0, v2}, Lorg/ungoogled/ui/LocalLabels;->editNativePlace(Ljava/lang/Object;Ljava/lang/Object;)Z
+    move-result v0
+    if-eqz v0, :ua_original_label_chip
+    return-void
+    :ua_original_label_chip
+"""
+    chip[0].write_text(text.replace(anchor,anchor+hook),encoding="utf-8",newline="\n")
+    text = you[0].read_text(encoding="utf-8")
+    pattern = r"(?ms)^\.method private labelDialog\(Lorg/ungoogled/ui/SavedStore\$Place;Ljava/lang/String;\)V.*?^\.end method"
+    replacement = """.method private labelDialog(Lorg/ungoogled/ui/SavedStore$Place;Ljava/lang/String;)V
+    .locals 0
+    invoke-static {p0, p1, p2}, Lorg/ungoogled/ui/LocalLabels;->edit(Landroid/app/Activity;Lorg/ungoogled/ui/SavedStore$Place;Ljava/lang/String;)V
+    return-void
+.end method"""
+    updated, count = re.subn(pattern,replacement,text)
+    if count != 1: raise ValueError("Local saved label dialog ABI changed")
+    you[0].write_text(updated,encoding="utf-8",newline="\n")
+    return [native[0],chip[0],you[0]]
 
 
 def next_dex(names):
@@ -144,11 +202,20 @@ def main():
     checks = {
         "SavedStore.smali": (".field static home:Lorg/ungoogled/ui/SavedStore$Place;",
                              ".field static work:Lorg/ungoogled/ui/SavedStore$Place;",
+                             ".field static final labels:Ljava/util/Map;",
+                             ".method static declared-synchronized labelsFor(Lorg/ungoogled/ui/SavedStore$Place;)Ljava/util/List;",
+                             ".method static declared-synchronized setLabel(Landroid/content/Context;Ljava/lang/String;Lorg/ungoogled/ui/SavedStore$Place;)V",
+                             ".method static declared-synchronized removeLabel(Landroid/content/Context;Ljava/lang/String;)V",
+                             ".method static declared-synchronized setHome(Landroid/content/Context;Lorg/ungoogled/ui/SavedStore$Place;)V",
+                             ".method static declared-synchronized setWork(Landroid/content/Context;Lorg/ungoogled/ui/SavedStore$Place;)V",
+                             ".method static aliasOf(Lorg/ungoogled/ui/SavedStore$Place;)Lorg/ungoogled/ui/SavedStore$Place;",
                              ".method static declared-synchronized load(Landroid/content/Context;)V",
                              ".method static declared-synchronized allSaved()Ljava/util/List;"),
         "SavedStore$Place.smali": (".field lat:D", ".field lng:D", ".field name:Ljava/lang/String;",
                                   ".field ftid:Ljava/lang/String;", ".field final lists:Ljava/util/Set;"),
         "SavedPlaces.smali": (".method static directions(Landroid/content/Context;Lorg/ungoogled/ui/SavedStore$Place;)V",
+                              ".method static dialogTheme(Landroid/content/Context;)I",
+                              ".method static place(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)Lorg/ungoogled/ui/SavedStore$Place;",
                               ".method static open(Landroid/content/Context;Lorg/ungoogled/ui/SavedStore$Place;)V"),
     }
     for name, signatures in checks.items():
@@ -157,17 +224,20 @@ def main():
             raise ValueError("Saved-places ABI changed: " + name)
     baseline = {p.relative_to(decoded).as_posix(): sha256(p) for p in decoded.rglob("*.smali")}
     front.write_text(lifecycle_hooks(front.read_text(encoding="utf-8")), encoding="utf-8", newline="\n")
+    label_changes = label_hooks(decoded)
     changed = [p.relative_to(decoded).as_posix() for p in decoded.rglob("*.smali")
                if baseline.get(p.relative_to(decoded).as_posix()) != sha256(p)]
-    if changed != [front.relative_to(decoded).as_posix()]:
+    if set(changed) != {p.relative_to(decoded).as_posix() for p in [front] + label_changes}:
         raise ValueError("Unexpected original-class changes: " + repr(changed))
+    target_dexes = {"classes.dex" if p.split("/")[0] == "smali" else p.split("/")[0].removeprefix("smali_") + ".dex" for p in changed}
     classes = work / "classes"
     classes.mkdir()
     sources = sorted(p for folder in ("src", "stubs", "tests") for p in (ROOT / folder).rglob("*.java"))
-    run(args.javac, "--release", "8", "-cp", android, "-d", classes, *sources)
+    run(args.javac, "-encoding", "UTF-8", "--release", "8", "-cp", android, "-d", classes, *sources)
     run(args.java, "-cp", str(classes) + os.pathsep + str(android), "org.ungoogled.ui.RouteGuardTest")
     run(args.java, "-cp", classes, "org.ungoogled.ui.MarkerGeometryTest")
-    jar_classes(work / "helper.jar", classes, "HomeWorkShortcuts*.class|LocalMarkers*.class|MarkerGeometry.class|MarkerGeometry$*.class")
+    run(args.java, "-cp", classes, "org.ungoogled.ui.LabelIndexTest")
+    jar_classes(work / "helper.jar", classes, "HomeWorkShortcuts*.class|LocalMarkers*.class|LocalLabels*.class|LabelIndex.class|MarkerGeometry.class|MarkerGeometry$*.class")
     jar_classes(work / "stubs.jar", classes, "Saved*.class")
     dex_dir = work / "helper-dex"
     dex_dir.mkdir()
@@ -185,12 +255,12 @@ def main():
             for entry in original.infolist():
                 if SIGNATURE.fullmatch(entry.filename):
                     continue
-                data = rebuilt.read(entry.filename) if entry.filename == target_dex else original.read(entry.filename)
+                data = rebuilt.read(entry.filename) if entry.filename in target_dexes else original.read(entry.filename)
                 patched.writestr(copy.copy(entry), data)
             patched.write(dex_dir / "classes.dex", extra, compress_type=zipfile.ZIP_DEFLATED)
         with zipfile.ZipFile(unsigned) as patched:
             changed_entries = [n for n in names if n in patched.namelist() and original.read(n) != patched.read(n)]
-            if changed_entries != [target_dex] or set(patched.namelist()) - set(names) != {extra}:
+            if set(changed_entries) != target_dexes or set(patched.namelist()) - set(names) != {extra}:
                 raise ValueError("APK entry preservation check failed")
     aligned = work / "aligned.apk"
     signed = work / "signed.apk"
@@ -208,9 +278,9 @@ def main():
     shutil.copy2(signed, args.output)
     report = {"package": PACKAGE, "version": VERSION, "input_sha256": sha256(args.input),
               "output_sha256": sha256(args.output), "certificate_sha256": output_certs,
-              "modified_original_classes": changed, "replaced_apk_entries": [target_dex],
+              "modified_original_classes": changed, "replaced_apk_entries": sorted(target_dexes),
               "added_apk_entries": [extra], "route_ownership_checks": 12,
-              "marker_geometry_10000_points": "passed",
+              "marker_geometry_10000_points": "passed", "label_matching": "passed",
               "installed": False, "runtime_verified": False}
     args.output.with_suffix(".verification.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("Built:", args.output)

@@ -1,6 +1,6 @@
 # Ungoogled Maps Local Enhancements
 
-A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) containing both native Home/Work shortcuts and saved-place map markers. The shortcuts clear their temporary coordinate selection on return; the markers support taps, grouping, smooth movement, natural edge clipping, and icons styled for dark maps.
+A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) containing native Home/Work shortcuts, saved-place map markers, and local labels connected to search and map captions. The shortcuts clear their temporary coordinate selection on return; the markers support taps, grouping, smooth movement, natural edge clipping, and icons styled for dark maps.
 
 This repository preserves the working source and a repeatable build process. It is a standalone post-patch tool, **not an importable Morphe patch bundle**. Apply the original publisher's patches first, then apply this extension to that APK on a PC.
 
@@ -11,11 +11,18 @@ This repository preserves the working source and a repeatable build process. It 
 - Keeps the category carousel scrollable beside the shortcuts.
 - Uses the existing local-saved directions action.
 - On Back from a shortcut route, dismisses only the matching temporary coordinate selection using Maps' native clear action.
-- Leaves ordinary searches and active navigation alone; writes no saved-place data and adds no network client.
+- Preserves ordinary search and active navigation; adds no network client.
+- Shows up to three matching local labels above native search suggestions: exact matches first, then prefixes and substrings. Matching ignores case and accents; refine the query to narrow a larger set. If a landscape keyboard leaves too little room, dismiss it to see local results.
+- Draws labels beside individual markers when space permits, and uses labels in marker selection. Label-only places appear too.
+- Connects the native Add label button, overflow action and Local saved editor to the same local label store. Supports add, rename and remove without sign-in, and prevents assigning the same normalized label to different places.
+
+Labels use the publisher's existing storage and export format. No migration is required; existing labels become searchable. Removing a label preserves the saved place and its list memberships. Home/Work remain reserved labels with their existing destination behavior. Label entry is local, but the native search field still runs Google's ordinary autocomplete: text typed there may be sent to Google. This extension does not make Maps search offline or private.
+
+Captions avoid our other markers/captions and native controls, but cannot detect Google's road/POI text or building occlusion. Crowded markers group; zoom in to see individual captions. A place with several labels displays one caption, while all aliases remain searchable. The place sheet retains Google's title and may still call its action “Add label”; the local dialog opens the existing label for editing.
 
 The marker extension reads Local saved, draws Home/Work and saved-list icons using Maps' projection, and opens a place when tapped. Its 24 dp circles use a soft palette, dark glyphs, and a slate rim tuned for dark maps; tap targets remain 44 dp. Nearby points form a numbered marker with a place chooser. Partially visible markers are clipped naturally at the screen sides instead of disappearing when their first edge crosses the viewport. Markers follow pan, zoom, rotation and tilt, and refresh after saves change. Position updates run on Android display frames rather than a 33 ms timer; saved-store refresh remains once per second. This improves motion alignment but remains a separate overlay, so exact compositor synchronization is not guaranteed. They are shown on the main browse map and hidden on route/navigation and place-detail screens.
 
-The `v1.0.0` tag preserves the original Home/Work-only checkpoint. This branch adds markers without changing `HomeWorkShortcuts.java`. No ETA labels are included. The local layer does not reproduce Google's native label collision, building occlusion, or account-backed saved layer.
+The `v1.0.0` tag preserves the original Home/Work-only checkpoint. Markers and labels do not change `HomeWorkShortcuts.java`. No ETA labels are included. The local layer does not reproduce Google's native label collision, building occlusion, or account-backed saved layer.
 
 ## Supported baseline
 
@@ -54,9 +61,9 @@ The password file contains the keystore password. If the key password differs, a
 The tool:
 
 1. Checks package/version, the local-saved class signatures, and absence of this extension.
-2. Decodes code while keeping resources raw and adds both helpers to the three lifecycle callbacks.
-3. Compiles the helpers and runs twelve coordinate-ownership checks plus marker grouping checks. Compile-time stubs and tests are excluded from the helper DEX.
-4. Rebuilds the lifecycle DEX, copies only that DEX into the original APK, and appends the helper as the next DEX.
+2. Decodes code while keeping resources raw, hooks the three lifecycle callbacks, and redirects the three label editor entry points.
+3. Compiles the helpers and runs twelve coordinate-ownership checks, marker grouping checks and label ranking/normalization checks. Compile-time stubs and tests are excluded from the helper DEX.
+4. Rebuilds the affected original classes' DEX files (classes.dex and classes7.dex on this baseline), copies those into the original APK, and appends the helper as the next DEX.
 5. Verifies all other original APK entry contents are preserved, aligns for 16 KB native-library pages, signs, checks the certificate, and writes an APK and verification report under `dist/`.
 
 Build products stay in `build/`; the script refuses to overwrite an existing work directory or output. For another build, use fresh paths:
@@ -93,6 +100,6 @@ APK bytes may differ across rebuilds because packaging/signing metadata can diff
 
 ## Repository contents and license
 
-`src/` contains the extension, `stubs/` contains compile-time signatures only, `tests/` contains coordinate-ownership and marker geometry checks, and `build.py` performs the post-patch build. APKs, decompiled Maps classes, Google resources, signing material, private places, and device screenshots are excluded.
+`src/` contains the extension, `stubs/` contains compile-time signatures only, `tests/` contains coordinate-ownership, marker geometry and label matching checks, and `build.py` performs the post-patch build. APKs, decompiled Maps classes, Google resources, signing material, private places, and device screenshots are excluded.
 
 GPL-3.0; see [LICENSE](LICENSE). The extension depends on local-saved functionality from bearinmindcat's GPL-licensed Morphe patches. This project is independent of Google and the upstream publisher and is not an endorsement by either.

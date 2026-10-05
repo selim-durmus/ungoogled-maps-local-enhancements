@@ -23,10 +23,11 @@ public final class LocalMarkers {
     public static void resume(Activity a) {
         if (!"com.google.android.maps.MapsActivity".equals(a.getClass().getName())) return;
         pause(a);
+        LocalLabels.resume(a);
         try { SavedStore.load(a); Controller c = new Controller(a); active.put(a,c); c.root.post(c); }
         catch (Throwable t) { android.util.Log.w("UA-Markers","Markers unavailable",t); }
     }
-    public static void pause(Activity a) { Controller c=active.remove(a); if(c!=null)c.close(); }
+    public static void pause(Activity a) { LocalLabels.pause(a); Controller c=active.remove(a); if(c!=null)c.close(); }
     private static ViewGroup carousel(View v) {
         for(Class<?> t=v.getClass();t!=null;t=t.getSuperclass())if(t.getName().equals("android.support.v7.widget.RecyclerView"))return (ViewGroup)v;
         if(v instanceof ViewGroup){ViewGroup g=(ViewGroup)v;for(int i=0;i<g.getChildCount();i++){ViewGroup found=carousel(g.getChildAt(i));if(found!=null&&found.isShown())return found;}}
@@ -41,8 +42,8 @@ public final class LocalMarkers {
         return null;
     }
     private static final class Entry {
-        final SavedStore.Place place; final String key,title; final int style; final Object coordinate;
-        Entry(SavedStore.Place p,String k,String t,int s,Object c) {place=p;key=k;title=t;style=s;coordinate=c;}
+        final SavedStore.Place place; final String key,title,caption; final int style; final Object coordinate;
+        Entry(SavedStore.Place p,String k,String t,String label,int s,Object c) {place=p;key=k;title=t;caption=label;style=s;coordinate=c;}
     }
     private static final class Controller implements Runnable {
         final Activity activity; final ViewGroup root; final Layer layer; final float density;
@@ -85,6 +86,7 @@ public final class LocalMarkers {
                 add(next,SavedStore.home,"Home",0);add(next,SavedStore.work,"Work",1);
                 for(SavedStore.Place p:SavedStore.allSaved()) add(next,p,p.name,p.lists.contains("favourites")?2:
                     p.lists.contains("starred")?3:p.lists.contains("want_to_go")?4:5);
+                for(SavedStore.Place p:LocalLabels.labeledPlaces())add(next,p,p.name,5);
             }
             entries=new ArrayList<>(next.values());refreshed=SystemClock.uptimeMillis();
         }
@@ -93,7 +95,10 @@ public final class LocalMarkers {
             String key=p.ftid!=null&&!p.ftid.isEmpty()?p.ftid:Math.round(p.lat*1000000)+","+Math.round(p.lng*1000000);
             if(into.containsKey(key))return;
             String title=name==null||name.trim().isEmpty()?"Saved place":name;
-            into.put(key,new Entry(p,key,title,style,makePoint.invoke(null,p.lat,p.lng)));
+            String label=LocalLabels.caption(p);
+            if(!label.isEmpty())title=label;
+            else if(style<2)label=title;
+            into.put(key,new Entry(p,key,title,label,style,makePoint.invoke(null,p.lat,p.lng)));
         }
         public void run() {
             // Position changes join the display's animation phase before view drawing.
@@ -167,6 +172,7 @@ public final class LocalMarkers {
                 button.update(members);button.setTranslationX(g.anchor.x-size/2f);button.setTranslationY(g.anchor.y-size/2f);
             }
             for(String k:new ArrayList<>(buttons.keySet()))if(!keep.contains(k))layer.removeView(buttons.remove(k));
+            layer.captions(groups,entries,exclusions);
         }
         void open(List<Entry> places) {
             if(places.isEmpty())return;
@@ -184,7 +190,38 @@ public final class LocalMarkers {
     /** Decor overlay avoids renderer child-count invariants; controls are excluded from marker targets. */
     private static final class Layer extends FrameLayout {
         final Controller owner;final int slop;MotionEvent down;boolean forwarding,drag;
+        final android.text.TextPaint text=new android.text.TextPaint(Paint.ANTI_ALIAS_FLAG);
+        final List<String> names=new ArrayList<>();final List<Rect> labels=new ArrayList<>();
         Layer(Controller c) {super(c.activity);owner=c;slop=ViewConfiguration.get(getContext()).getScaledTouchSlop();setClipChildren(true);setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);}
+        void captions(List<MarkerGeometry.Group> groups,List<Entry> entries,List<Rect> controls) {
+            names.clear();labels.clear();float d=owner.density;
+            text.setTextSize(12*d);text.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            List<Rect> occupied=new ArrayList<>(controls);
+            for(MarkerGeometry.Group g:groups)occupied.add(new Rect((int)(g.anchor.x-17*d),(int)(g.anchor.y-17*d),(int)(g.anchor.x+17*d),(int)(g.anchor.y+17*d)));
+            for(MarkerGeometry.Group g:groups) {
+                Entry entry=entries.get(g.anchor.index);if(g.members.size()!=1||entry.caption.isEmpty())continue;
+                String value=android.text.TextUtils.ellipsize(entry.caption,text,130*d,android.text.TextUtils.TruncateAt.END).toString();
+                int width=(int)Math.ceil(text.measureText(value)+4*d),height=(int)Math.ceil(18*d);
+                int x=(int)g.anchor.x,y=(int)g.anchor.y;
+                Rect[] options={new Rect(x+(int)(18*d),y-height/2,x+(int)(18*d)+width,y+height/2),
+                    new Rect(x-(int)(18*d)-width,y-height/2,x-(int)(18*d),y+height/2),
+                    new Rect(x-width/2,y-(int)(17*d)-height,x+width/2,y-(int)(17*d))};
+                for(Rect r:options) {
+                    if(r.left<0||r.right>getWidth()||r.top<0||r.bottom>getHeight()-32*d)continue;
+                    boolean collision=false;for(Rect other:occupied)if(Rect.intersects(r,other)){collision=true;break;}
+                    if(collision)continue;names.add(value);labels.add(r);occupied.add(r);break;
+                }
+            }
+            invalidate();
+        }
+        protected void dispatchDraw(Canvas c) {
+            super.dispatchDraw(c);float d=owner.density;
+            for(int i=0;i<names.size();i++) {
+                Rect r=labels.get(i);float x=r.left+2*d,y=r.centerY()-(text.ascent()+text.descent())/2;
+                text.setStyle(Paint.Style.STROKE);text.setStrokeWidth(3*d);text.setStrokeJoin(Paint.Join.ROUND);text.setColor(0xff172333);
+                c.drawText(names.get(i),x,y,text);text.setStyle(Paint.Style.FILL);text.setColor(0xffc5d7ff);c.drawText(names.get(i),x,y,text);
+            }
+        }
         void releaseTouch(){if(down!=null){down.recycle();down=null;}drag=false;}
         public boolean dispatchTouchEvent(MotionEvent e) {
             if(forwarding)return false;

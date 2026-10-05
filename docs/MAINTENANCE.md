@@ -4,15 +4,25 @@ The v1.0.0 checkpoint includes native Home/Work chips and Back cleanup. The mark
 
 ## Marker implementation
 
+The label extension adds three editor hooks alongside the lifecycle hooks described below. It does not change the renderer or saved-store implementation.
+
 The marker layer sits on the activity decor view. Do not add children to MapViewContainer: Maps asserts its renderer child count when opening place sheets. Marker targets avoid the category row and clickable native controls. Blank areas pass through; a drag/pinch beginning on a marker replays the touch sequence to the native root with overlay forwarding disabled.
 
 For this Maps version, find the live `MapViewContainer`, read its public `e` renderer (`bjip`), obtain its camera via `g()` (`bjja`), and acquire each snapshot via `d()` (`bjje`). Convert latitude/longitude with `bjbd.F(DD)`, project through `bjje.h(bjbd)`, and read the resulting `bjbz.b/c` floats. `bjje.j()` gives comparable camera state so stationary frames can avoid projecting/repositioning every saved point. The emulator uses `bktd -> bkth`; the interface also supports the other renderer implementation. For a legacy `d` renderer (`bizr`), get the current `bjof` via `d()` and construct a fresh `bkth`; do not cache a copied camera snapshot across frames.
 
-Only the three existing lifecycle callbacks are patched; no renderer bytecode, native library, resources, manifest, or saved-store implementation is changed. The controller runs only while MapsActivity is resumed. Visible marker positions use View.postOnAnimation, allowing sampling and translation before Android view drawing at the display cadence. Hidden states retain 250 ms polling, projection failures 1 second, and pause/destroy removes pending callbacks. Saved places refresh once per second. Control exclusions refresh every 200 ms. Unchanged camera/geometry skips projection and view updates. The separate map surface may still differ from the overlay composition timing; do not describe this as a native renderer layer. Viewport culling uses marker-rectangle intersection, retaining partially visible targets for normal decor clipping. Existing exclusion rules around native controls and top/bottom chrome remain. Invalid coordinates are excluded; coincident identities are deduplicated and nearby visible points are grouped while retaining every member for selection. Native drawable IDs and list colors are documented in LocalMarkers.MarkerButton. The 24 dp visible circles use fixed colors tuned for night-mode map POIs (not automatic theme selection), with 44 dp touch targets and unchanged grouping/edge bounds. The implementation adds no network client and does not write saved data.
+The marker feature uses the three existing lifecycle callbacks; label entry points are additionally patched as documented below. No renderer bytecode, native library, resources, manifest, or saved-store implementation is changed. The controller runs only while MapsActivity is resumed. Visible marker positions use View.postOnAnimation, allowing sampling and translation before Android view drawing at the display cadence. Hidden states retain 250 ms polling, projection failures 1 second, and pause/destroy removes pending callbacks. Saved places refresh once per second. Control exclusions refresh every 200 ms. Unchanged camera/geometry skips projection and view updates. The separate map surface may still differ from the overlay composition timing; do not describe this as a native renderer layer. Viewport culling uses marker-rectangle intersection, retaining partially visible targets for normal decor clipping. Existing exclusion rules around native controls and top/bottom chrome remain. Invalid coordinates are excluded; coincident identities are deduplicated and nearby visible points are grouped while retaining every member for selection. Native drawable IDs and list colors are documented in LocalMarkers.MarkerButton. The 24 dp visible circles use fixed colors tuned for night-mode map POIs (not automatic theme selection), with 44 dp touch targets and unchanged grouping/edge bounds. The implementation adds no network client and does not write saved data.
 
 Marker checks additionally cover cluster selection, individual-place opening, removing a saved place, map controls, gestures starting on markers, rotated/tilted cameras, orientation changes, and no marker overlay on routes/place sheets. UI verification must accompany geometry tests: the 10,000-point test checks grouping, not rendering performance with 10,000 saved places.
 
 ## Same Maps version, newer publisher patches
+
+For label support also inspect the following bindings. SavedStore.labels maps aliases to Place snapshots and its existing save/export methods remain authoritative. LocalLabels writes through the existing setLabel/removeLabel/setHome/setWork methods. Identity remains the feature ID or six-decimal coordinate key; do not merge unrelated businesses merely because they are nearby.
+
+Three label entry points are redirected: atqq.a(bcio) delegates via atqs.a (Activity) and atqs.l (awvj selected place); the label branch of areb.onClick delegates via atlg.a (Activity) and areb.c (awvj); YouActivity.labelDialog delegates to the shared editor. Unrecognized native models fall through to the original action. Unwrap awvj.a() to oku, then use oku.bz()/p()/q() for name/feature ID/coordinates and SavedPlaces.place for conversion. Resolve an existing saved/label record by identity before editing to retain its original display name. Native chip titles are not rewritten.
+
+The search controller follows search_omnibox_edit_text and typed_suggest_container (0x7f0b0d2c). It places up to three ranked local rows above native suggestions by temporarily translating/clipping/padding the native list. Original layout is restored on empty/no match, view replacement, selection and pause. Polling at 150 ms handles native subtree replacements; text changes also schedule an immediate refresh. Native autocomplete continues to receive the query. Search and captions use fixed dark-map colors.
+
+Caption layout follows the existing frame callback and projection. It reserves space around local markers, native controls and earlier captions; it cannot inspect Google's internal text collision layout. Clustered labels appear in the chooser, with individual captions after zooming in. Marker contents refresh once per second.
 
 1. Keep the working APK, original signing key, password, and an export of Local saved outside Git.
 2. Produce a fresh upstream-patched APK signed with the same key used on the phone.
@@ -60,6 +70,12 @@ Back cleanup does not intercept Android Back. A task-scoped, in-memory session r
 Do not clear arbitrary coordinate searches, repeatedly click clear, or clear while route preview/navigation is visible.
 
 ## Regression checks
+
+- Existing labels appear without migration; exact/prefix/substring and case/accent matches rank correctly.
+- No-match/clear restores native suggestion layout; native result selection and keyboard/Back still work.
+- Direct and overflow label editors support rename/cancel/remove and reject label conflicts across places.
+- Label removal preserves list memberships; label-only markers disappear when their label is removed.
+- Labels survive restart; portrait/landscape and pause/resume do not duplicate local results.
 
 - No Home/Work configured: original category row unchanged.
 - Home only, Work only, and both: correct chips/destinations; updates after saved labels change.
