@@ -2,7 +2,27 @@
 
 A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) containing native Home/Work shortcuts, saved-place map markers, and local labels connected to search and map captions. The shortcuts clear their temporary coordinate selection on return; the markers support taps, grouping, smooth movement, natural edge clipping, and icons styled for dark maps.
 
-This repository preserves the working source and a repeatable build process. It is a standalone post-patch tool, **not an importable Morphe patch bundle**. Apply the original publisher's patches first, then apply this extension to that APK on a PC.
+This repository preserves the upstream patch source, its original compiled patch bundle, our additional features, and a complete PC build process. The full build applies the preserved Morphe bundle to stock Maps, then compiles and applies our additions. It is not a combined patch bundle that Morphe Manager can import.
+
+## Rebuild everything
+
+Clone this repository and extract your encrypted private recovery archive. The archive supplies the exact stock APK, signing material, and portable Windows build tools; those private inputs are deliberately outside Git.
+
+Run from the cloned repository in PowerShell:
+
+    .\build-all.ps1 -RecoveryRoot 'D:\Maps Recovery\recovery-kit'
+
+The script verifies pinned input/tool hashes, applies all 32 preserved upstream patches, adds Home/Work, markers and labels, signs the result, and prints its location under dist. No system-wide Java, Python, Android SDK or Morphe Manager installation is needed. No files are downloaded and no phone is modified. It refuses changed inputs instead of guessing compatibility.
+
+To rebuild using the preserved already-patched baseline:
+
+    .\build-all.ps1 -RecoveryRoot 'D:\Maps Recovery\recovery-kit' -From baseline
+
+To test with Java network access denied:
+
+    .\build-all.ps1 -RecoveryRoot 'D:\Maps Recovery\recovery-kit' -VerifyOffline
+
+See [Recovery and Morphe workflow](docs/RECOVERY.md) for archive contents, fresh-machine recovery, version limitations and the distinction between building an APK and recompiling upstream patches.
 
 ## Features
 
@@ -39,6 +59,8 @@ The `v1.0.0` tag preserves the original Home/Work-only checkpoint. Markers and l
 **A newer Maps version requires porting and testing.** The code uses version-specific resource IDs and obfuscated Chip internals. The build rejects a different Maps version; do not simply remove that check. Even changes to upstream patches on the same Maps version require review and a device smoke test. See [maintenance instructions](docs/MAINTENANCE.md).
 
 ## Build
+
+The instructions below describe the lower-level enhancement-only builder. For a complete stock-to-final APK build, use the command above.
 
 Install Python, a JDK with `java` and `javac` on PATH, the Android SDK components above, and the Apktool JAR. Obtain the original Maps APK and patch it with the publisher's Morphe patches, including local saved places and the package name above. Use that fresh output as input; do not feed this extension's own output back into the tool.
 

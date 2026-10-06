@@ -24,3 +24,7 @@ ungoogled_saved.json
 *ui.xml
 *.png
 *.jpg
+*.7z
+*.bundle
+recovery-kit/
+recovery-password*
