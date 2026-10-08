@@ -1,8 +1,21 @@
-# Ungoogled Maps Local Enhancements
+# Tutto Enhancements for Ungoogled Maps
 
 A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) containing native Home/Work shortcuts, saved-place map markers, and local labels connected to search and map captions. The shortcuts clear their temporary coordinate selection on return; the markers support taps, grouping, smooth movement, natural edge clipping, and icons styled for dark maps.
 
-This repository preserves the upstream patch source, its original compiled patch bundle, our additional features, and a complete PC build process. The full build applies the preserved Morphe bundle to stock Maps, then compiles and applies our additions. It is not a combined patch bundle that Morphe Manager can import.
+This repository is also a **Morphe patch source named Tutto Enhancements**. Its MPP adds our features alongside bearinmind's patches in one patching run. The repository preserves both compiled bundles, upstream source, our source, and an offline PC build process.
+
+## Use in Morphe Manager
+
+[Add Tutto Enhancements to Morphe](https://morphe.software/add-source?github=selim-durmus/ungoogled-maps-local-enhancements), or add this repository URL under Sources. Keep bearinmind's source too.
+
+1. In Expert mode select the original Google Maps **26.36.04.973607363** APK/APKM.
+2. Select bearinmind's normal Ungoogled Maps patches, including **Offline saved places**, **Change package name**, and **Hide ads and clutter**. Leave **Add microG support** off.
+3. Under **Tutto Enhancements**, select **Home, Work, markers and labels**.
+4. Patch once. Use the same signing key and package name as your installed app to update without uninstalling.
+
+Tested combination: bearinmind **1.7.4**, Tutto **1.3.0**, Morphe Manager **1.34.0** / Desktop **1.18.1**. One checkbox includes all our features because markers and labels share their controller. The patch validates required upstream code after all patch execution blocks have run; tab order does not establish dependencies. Missing Local saved support and the microG variant fail with a clear message. Future upstream releases still need compatibility review; successful structural checks alone cannot guarantee runtime behavior.
+
+The patch source contains no signing key, Google APK, or saved places. A fresh Morphe installation may have a different key; do not uninstall your current Maps app to bypass a signing conflict. See [Morphe source and development](docs/MORPHE-SOURCE.md).
 
 ## Rebuild everything
 
@@ -12,9 +25,9 @@ Run from the cloned repository in PowerShell:
 
     .\build-all.ps1 -RecoveryRoot 'D:\Maps Recovery\recovery-kit'
 
-The script verifies pinned input/tool hashes, applies all 32 preserved upstream patches, adds Home/Work, markers and labels, signs the result, and prints its location under dist. No system-wide Java, Python, Android SDK or Morphe Manager installation is needed. No files are downloaded and no phone is modified. It refuses changed inputs instead of guessing compatibility.
+The script verifies pinned input/tool hashes, applies bearinmind 1.7.4's 21 default patches plus Tutto Enhancements, signs the result, and prints its location under dist. Ad hiding is included. No system-wide Java, Python, Android SDK or Morphe Manager installation is needed. No files are downloaded and no phone is modified. Changed feature source requires rebuilding the Tutto MPP before this command will proceed.
 
-To rebuild using the preserved already-patched baseline:
+To use the legacy v1.3.0 upstream baseline instead (without the new upstream fixes/clutter controls):
 
     .\build-all.ps1 -RecoveryRoot 'D:\Maps Recovery\recovery-kit' -From baseline
 
@@ -50,7 +63,7 @@ The `v1.0.0` tag preserves the original Home/Work-only checkpoint. Markers and l
 | --- | --- |
 | Maps | `26.36.04.973607363` / version code `1068763346` |
 | Package | `org.ungoogled.android.apps.maps` |
-| Upstream patches | v1.3.0, commit [`35421159`](https://github.com/bearinmindcat/morphe-patches/tree/35421159e2149d1ca972ffd0f16b79666569035c) |
+| Upstream patches | v1.7.4 for stock builds; v1.3.0 for the legacy baseline path |
 | Java | JDK 17; helper targets Java 8 |
 | Python | 3.11+; standard library only |
 | Android SDK | Platform 36, Build Tools 36.0.0 |

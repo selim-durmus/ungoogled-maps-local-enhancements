@@ -38,9 +38,15 @@ def main():
         path = kit / name
         if not path.is_file() or sha256(path) != lock["files"][name]:
             raise ValueError("Missing or changed recovery input/tool: " + name)
-    bundle = ROOT / "vendor/artifacts/patches-1.3.0.mpp"
-    if sha256(bundle) != lock["patch_bundle_sha256"]:
-        raise ValueError("Preserved patch bundle checksum mismatch")
+    current = json.loads((ROOT / "config/morphe-source-lock.json").read_text())
+    if args.source == "stock":
+        for name, expected in current["files"].items():
+            if sha256(ROOT / name) != expected:
+                raise ValueError("Preserved Morphe source checksum mismatch: " + name)
+        source_manifest = json.loads((ROOT / "vendor/artifacts/tutto-enhancements-1.3.0.sources.json").read_text())
+        for name, expected in source_manifest.items():
+            if sha256(ROOT / name) != expected:
+                raise ValueError("Tutto bundle is stale. Rebuild and release it after changing: " + name)
     for name in ("maps-signing.p12", "signing-password.txt"):
         if not (kit / "signing" / name).is_file():
             raise ValueError("Missing private signing input: " + name)
@@ -74,28 +80,36 @@ def main():
     stage_input = kit / source_name
     if args.source == "stock":
         unsigned = work / "upstream-unsigned.apk"
-        stage_input = work / "upstream-signed.apk"
         cli = work / "tools/morphe-desktop.jar"
         cli.parent.mkdir()
         shutil.copy2(kit / "tools/morphe-desktop.jar", cli)
-        print("Stage 1/2: applying the preserved 32-patch Morphe bundle.", flush=True)
+        print("Applying bearinmind 1.7.4 and Tutto Enhancements together.", flush=True)
         run(java, "-Xmx4g", "-jar", cli, "patch",
-            "-p", bundle, "--options-file", ROOT / "config/morphe-options.json",
+            "-p", ROOT / "vendor/artifacts/patches-1.7.4.mpp",
+            "-p", ROOT / "vendor/artifacts/tutto-enhancements-1.3.0.mpp",
+            "--options-file", ROOT / "config/morphe-combined-options.json",
             "--bytecode-mode", "FULL", "--unsigned", "-o", unsigned,
             "-t", work / "morphe-temp", "-r", work / "morphe-result.json",
             kit / source_name, env=env)
+        output.parent.mkdir(parents=True, exist_ok=True)
         run(java, "-jar", signer, "sign", "--ks", kit / "signing/maps-signing.p12",
             "--ks-pass", "file:" + str(kit / "signing/signing-password.txt"),
-            "--ks-key-alias", "morphe", "--out", stage_input, unsigned, env=env)
-    print("Stage 2/2: compiling and applying Home/Work, markers and local labels.", flush=True)
-    run(sys.executable, ROOT / "build.py", "--input", stage_input,
-        "--apktool", kit / "tools/apktool.jar", "--sdk", sdk,
-        "--java", java, "--javac", javac, "--keystore", kit / "signing/maps-signing.p12",
-        "--password-file", kit / "signing/signing-password.txt",
-        "--work-dir", work / "enhancements", "--output", output, env=env)
+            "--ks-key-alias", "morphe", "--out", output, unsigned, env=env)
+        sys.path.insert(0, str(ROOT))
+        from build import certificates
+        if certificates(java, signer, output) != certificates(java, signer, kit / "inputs/maps-working.apk"):
+            raise ValueError("Output signing certificate differs from the preserved working app")
+    else:
+        print("Legacy baseline: compiling and applying Home/Work, markers and local labels.", flush=True)
+        run(sys.executable, ROOT / "build.py", "--input", stage_input,
+            "--apktool", kit / "tools/apktool.jar", "--sdk", sdk,
+            "--java", java, "--javac", javac, "--keystore", kit / "signing/maps-signing.p12",
+            "--password-file", kit / "signing/signing-password.txt",
+            "--work-dir", work / "enhancements", "--output", output, env=env)
     report = {
         "source": args.source, "input_sha256": lock["files"][source_name],
-        "upstream_commit": lock["upstream_commit"], "patch_bundle_sha256": lock["patch_bundle_sha256"],
+        "upstream_commit": current["upstream_commit"] if args.source == "stock" else lock["upstream_commit"],
+        "patch_bundles": current["files"] if args.source == "stock" else {"patches-1.3.0.mpp": lock["patch_bundle_sha256"]},
         "output_sha256": sha256(output), "java_network_denied": args.verify_offline,
         "downloaded_during_build": False, "installed": False,
     }

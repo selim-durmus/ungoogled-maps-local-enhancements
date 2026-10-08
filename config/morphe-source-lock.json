@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "bundle_name": "Tutto Enhancements",
+  "bundle_version": "1.3.0",
+  "maps_version": "26.36.04.973607363",
+  "maps_version_code": "1068763346",
+  "upstream_release": "v1.7.4",
+  "upstream_commit": "c7bd4c2630b257f695f59a5cf08b98b0b46e85d4",
+  "morphe_manager_tested": "1.34.0",
+  "morphe_desktop": "1.18.1",
+  "kotlin": "2.4.20",
+  "kotlin_zip_sha256": "59e9ca74c7904ef2c122b12114937673ccce68de820a663f0ed66ccf8799e0b7",
+  "files": {
+    "vendor/artifacts/patches-1.7.4.mpp": "4aab6ec4655125edea5f0f14e8ba5458e6451305784f8c434beb0b516dd54082",
+    "vendor/artifacts/tutto-enhancements-1.3.0.mpp": "ba8243c3facfa036fc047c616cf8df01cc72f3bdb5f7745bb04bd8f0a13c5b8c",
+    "vendor/artifacts/morphe-patches-1.7.4-source.tar.gz": "59e305d4e340e5f41f4b41d6302f904fdad75c72a19380c158d7997540b9cf75"
+  }
+}

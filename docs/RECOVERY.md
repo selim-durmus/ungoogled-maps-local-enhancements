@@ -7,12 +7,12 @@ The repository contains the complete extension source, pinned upstream source, t
 The full pipeline is:
 
 1. Verify the stock Maps APK and tool hashes against config/build-lock.json.
-2. Run the preserved Morphe Desktop CLI with the bundled upstream MPP and config/morphe-options.json.
-3. Apply all 32 upstream patches in FULL bytecode mode and sign the intermediate APK with the private key.
-4. Compile our Home/Work, marker and label helpers and apply the guarded native hooks.
-5. Verify original APK-entry preservation, align, sign with the same key, and check the output certificate.
+2. Verify both bundles against config/morphe-source-lock.json and our bundle's source checksums.
+3. Run the preserved Morphe Desktop CLI with bearinmind 1.7.4 and Tutto Enhancements 1.3.0, using config/morphe-combined-options.json.
+4. Apply 21 upstream patches plus our enhancement patch in FULL bytecode mode. Ad hiding is included; microG is disabled.
+5. Align, sign with the same key, and compare the output certificate with the preserved working app.
 
-Morphe Manager is not required on the phone. Importing the upstream MPP into Manager applies the upstream features only. Our additions are applied by the PC's second build stage. Converting all additions into an importable combined MPP would be a separate port; this preservation setup does not claim to do that.
+Morphe Manager is optional: it can now apply the two sources together on Android. Add this repository as the Tutto Enhancements source alongside bearinmind's source. See MORPHE-SOURCE.md. The legacy `--from baseline` path still compiles our helpers from source and uses the older upstream baseline.
 
 ## Private recovery archive
 
@@ -55,6 +55,8 @@ The guard and probe are test utilities; neither is packaged into the Android APK
 
 This release targets Maps 26.36.04.973607363 / 1068763346. Both the stock and baseline APKs are locked by SHA-256. Our native bindings are also version-gated. A newer Maps APK requires a reviewed port and new tests; Google service availability is outside this backup's control.
 
-Routine APK builds use the archived upstream compiled MPP and compile our extension from source. Recompiling the upstream MPP itself is a different operation: its Gradle project uses external Gradle/Google/GitHub/JitPack dependencies and may require a GitHub Packages credential. Its full Gradle dependency cache is not part of this recovery kit. The source is preserved for future changes, but an offline rebuild of the upstream MPP from source is not claimed.
+Routine stock APK builds use the two archived MPPs. Rebuilding our MPP uses build-bundle.py, the recovery tools, and the official Kotlin compiler 2.4.20 ZIP (one additional, hash-pinned download). This compiler is not in the original v1.2.0 encrypted archive. Recompiling the upstream MPP itself remains a different operation: its Gradle project uses external Gradle/Google/GitHub/JitPack dependencies and may require a GitHub Packages credential. Its full Gradle dependency cache is not part of this recovery kit. The source is preserved for future changes, but an offline rebuild of the upstream MPP from source is not claimed.
+
+The original encrypted archive and its v1.2.0 source snapshot remain unchanged. Use a current repository checkout plus that archive's recovery-kit to build the latest pinned combination. Keep a copy of the updated repository off the PC too; the old archive alone recreates the old release.
 
 To accept a new upstream release, keep the previous tag and archive, update source and MPP together, review the selected options, and rebuild/test on the exact target Maps version.

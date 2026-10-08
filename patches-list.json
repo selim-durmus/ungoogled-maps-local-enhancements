@@ -1,0 +1,32 @@
+{
+    "version": "1.3.0",
+    "patches": [
+        {
+            "name": "Home, Work, markers and labels",
+            "description": "Adds Home/Work shortcuts with clean Back navigation, dark map markers and searchable local labels. Select alongside bearinmind's Offline saved places. Tested with bearinmind 1.7.4 and Maps 26.36.04.973607363. Does not support Add microG support.",
+            "default": true,
+            "category": null,
+            "dependencies": [],
+            "options": [],
+            "compatiblePackages": [
+                {
+                    "packageName": "com.google.android.apps.maps",
+                    "name": "Google Maps",
+                    "description": null,
+                    "apkFileType": "APKM",
+                    "appIconColor": "#FFFFFF",
+                    "signatures": null,
+                    "targets": [
+                        {
+                            "version": "26.36.04.973607363",
+                            "versionCodes": null,
+                            "isExperimental": false,
+                            "minSdk": null,
+                            "description": null
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
