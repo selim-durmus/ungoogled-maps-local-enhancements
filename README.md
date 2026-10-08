@@ -15,6 +15,8 @@ This repository is also a **Morphe patch source named Tutto Enhancements**. Its 
 
 Tested combination: bearinmind **1.7.4**, Tutto **1.3.0**, Morphe Manager **1.34.0** / Desktop **1.18.1**. One checkbox includes all our features because markers and labels share their controller. The patch validates required upstream code after all patch execution blocks have run; tab order does not establish dependencies. Missing Local saved support and the microG variant fail with a clear message. Future upstream releases still need compatibility review; successful structural checks alone cannot guarantee runtime behavior.
 
+Latest Tutto release: **1.3.1**, fixing marker touch interception during rotation, pinch and dragging. Refresh this source in Morphe to obtain it. The runtime touch fix passed 15 Android emulator regression checks; the full Maps/Manager build combination above was verified with 1.3.0. See [1.3.1 verification](docs/touch-verification-1.3.1.md) for the test scope.
+
 The patch source contains no signing key, Google APK, or saved places. A fresh Morphe installation may have a different key; do not uninstall your current Maps app to bypass a signing conflict. See [Morphe source and development](docs/MORPHE-SOURCE.md).
 
 ## Rebuild everything

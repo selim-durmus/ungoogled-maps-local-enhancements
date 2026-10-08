@@ -75,8 +75,8 @@
   },
   {
     "meta": {
-      "source": "tutto-enhancements-1.3.0.mpp",
-      "sha256": "ba8243c3facfa036fc047c616cf8df01cc72f3bdb5f7745bb04bd8f0a13c5b8c"
+      "source": "tutto-enhancements-1.3.1.mpp",
+      "sha256": "20157a84f17eb959334efb29d85082c5e07528d5d0b2d873901cec91e748fdbb"
     },
     "patches": {
       "Home, Work, markers and labels": {

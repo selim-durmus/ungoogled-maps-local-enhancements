@@ -9,7 +9,6 @@ import android.graphics.drawable.Drawable;
 import android.os.SystemClock;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import java.lang.reflect.*;
@@ -78,6 +77,7 @@ public final class LocalMarkers {
                 if(layer.getParent() instanceof ViewGroup)((ViewGroup)layer.getParent()).removeView(layer);
                 root.addView(layer,new FrameLayout.LayoutParams(-1,-1));
             }
+            layer.touch.install();
             return true;
         }
         void refresh()throws Exception {
@@ -182,17 +182,17 @@ public final class LocalMarkers {
                 (dialog,which)->SavedPlaces.open(activity,places.get(which).place)).setNegativeButton("Close",null).show();
         }
         void close() {
-            closed=true;root.removeCallbacks(this);layer.releaseTouch();
+            closed=true;root.removeCallbacks(this);layer.touch.close();
             if(layer.getParent() instanceof ViewGroup)((ViewGroup)layer.getParent()).removeView(layer);
             buttons.clear();entries.clear();camera=renderer=null;map=null;
         }
     }
     /** Decor overlay avoids renderer child-count invariants; controls are excluded from marker targets. */
     private static final class Layer extends FrameLayout {
-        final Controller owner;final int slop;MotionEvent down;boolean forwarding,drag;
+        final Controller owner;final MarkerTouchRouter touch;
         final android.text.TextPaint text=new android.text.TextPaint(Paint.ANTI_ALIAS_FLAG);
         final List<String> names=new ArrayList<>();final List<Rect> labels=new ArrayList<>();
-        Layer(Controller c) {super(c.activity);owner=c;slop=ViewConfiguration.get(getContext()).getScaledTouchSlop();setClipChildren(true);setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);}
+        Layer(Controller c) {super(c.activity);owner=c;touch=new MarkerTouchRouter(c.activity.getWindow(),this);setClipChildren(true);setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);}
         void captions(List<MarkerGeometry.Group> groups,List<Entry> entries,List<Rect> controls) {
             names.clear();labels.clear();float d=owner.density;
             text.setTextSize(12*d);text.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
@@ -222,25 +222,10 @@ public final class LocalMarkers {
                 c.drawText(names.get(i),x,y,text);text.setStyle(Paint.Style.FILL);text.setColor(0xffc5d7ff);c.drawText(names.get(i),x,y,text);
             }
         }
-        void releaseTouch(){if(down!=null){down.recycle();down=null;}drag=false;}
+        // Touches reach the native map intact. The window router handles only marker taps;
+        // clickable/focusable children retain their accessibility actions.
         public boolean dispatchTouchEvent(MotionEvent e) {
-            if(forwarding)return false;
-            if(e.getActionMasked()==MotionEvent.ACTION_DOWN)releaseTouch();
-            boolean handled=super.dispatchTouchEvent(e);
-            if(e.getActionMasked()==MotionEvent.ACTION_DOWN&&handled)down=MotionEvent.obtain(e);
-            if(e.getActionMasked()==MotionEvent.ACTION_UP||e.getActionMasked()==MotionEvent.ACTION_CANCEL)releaseTouch();
-            return handled;
-        }
-        public boolean onInterceptTouchEvent(MotionEvent e) {
-            if(down!=null&&(e.getPointerCount()>1||Math.hypot(e.getX()-down.getX(),e.getY()-down.getY())>slop)){drag=true;return true;}
             return false;
-        }
-        public boolean onTouchEvent(MotionEvent e) {
-            if(!drag||down==null||owner.map==null)return false;
-            MotionEvent start=down;down=null;forwarding=true;
-            try {owner.root.dispatchTouchEvent(start);owner.root.dispatchTouchEvent(e);}
-            finally {forwarding=false;start.recycle();drag=false;}
-            return true;
         }
     }
     private static final class MarkerButton extends View {

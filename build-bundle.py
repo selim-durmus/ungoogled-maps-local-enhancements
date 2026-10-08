@@ -15,7 +15,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build import ROOT, jar_classes, run, sha256
 
-VERSION = "1.3.0"
+VERSION = "1.3.1"
 REPO = "https://github.com/selim-durmus/ungoogled-maps-local-enhancements"
 COMPILER_SHA = "59e9ca74c7904ef2c122b12114937673ccce68de820a663f0ed66ccf8799e0b7"
 
@@ -51,7 +51,7 @@ def main():
     run(java, "-cp", str(classes) + os.pathsep + str(android), "org.ungoogled.ui.RouteGuardTest")
     run(java, "-cp", classes, "org.ungoogled.ui.MarkerGeometryTest")
     run(java, "-cp", classes, "org.ungoogled.ui.LabelIndexTest")
-    jar_classes(work / "helpers.jar", classes, "HomeWorkShortcuts*.class|LocalMarkers*.class|LocalLabels*.class|LabelIndex.class|MarkerGeometry*.class")
+    jar_classes(work / "helpers.jar", classes, "HomeWorkShortcuts*.class|LocalMarkers*.class|LocalLabels*.class|LabelIndex.class|MarkerGeometry*.class|MarkerTouchRouter*.class")
     jar_classes(work / "stubs.jar", classes, "Saved*.class")
     extension = work / "extension"
     extension.mkdir()

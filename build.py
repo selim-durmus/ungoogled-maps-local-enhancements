@@ -237,7 +237,7 @@ def main():
     run(args.java, "-cp", str(classes) + os.pathsep + str(android), "org.ungoogled.ui.RouteGuardTest")
     run(args.java, "-cp", classes, "org.ungoogled.ui.MarkerGeometryTest")
     run(args.java, "-cp", classes, "org.ungoogled.ui.LabelIndexTest")
-    jar_classes(work / "helper.jar", classes, "HomeWorkShortcuts*.class|LocalMarkers*.class|LocalLabels*.class|LabelIndex.class|MarkerGeometry.class|MarkerGeometry$*.class")
+    jar_classes(work / "helper.jar", classes, "HomeWorkShortcuts*.class|LocalMarkers*.class|LocalLabels*.class|LabelIndex.class|MarkerGeometry.class|MarkerGeometry$*.class|MarkerTouchRouter*.class")
     jar_classes(work / "stubs.jar", classes, "Saved*.class")
     dex_dir = work / "helper-dex"
     dex_dir.mkdir()
