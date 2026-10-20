@@ -4,7 +4,7 @@
 
 The source publishes one MPP containing desktop JVM patch classes, Android patch DEX, and a small runtime extension DEX. Existing Java feature source under src/ is reused unchanged. Compile-only SavedStore/SavedPlaces stubs and test classes are excluded from the runtime DEX. The upstream implementation is never bundled a second time.
 
-`morphe/TuttoEnhancements.kt` adds the Home/Work lifecycle hooks to the Morphe API (1.3.x also hooked labels and markers; bearinmind's Offline saved places now does that). It uses a finalize block, which runs after all selected patches' execute blocks, then validates the upstream Local saved fields and methods the shortcuts use, a real native Save hook, and the microG flag before editing. It does not try to import a Kotlin dependsOn reference from a separately loaded bundle. This avoids duplicated upstream dependencies and makes the source independent of tab order for the tested upstream version.
+`morphe/TuttoEnhancements.kt` defines two named patches, Home and Work shortcuts and Label search suggestions, each adding its helper's lifecycle hooks; an unnamed patch they both depend on merges the helper DEX once. (1.3.x also hooked map markers and label editors; bearinmind's Offline saved places now does that.) It uses a finalize block, which runs after all selected patches' execute blocks, then validates the upstream Local saved fields and methods the shortcuts use, a real native Save hook, and the microG flag before editing. It does not try to import a Kotlin dependsOn reference from a separately loaded bundle. This avoids duplicated upstream dependencies and makes the source independent of tab order for the tested upstream version.
 
 Version compatibility is restricted to original Google Maps 26.36.04.973607363. Start from the original APK/APKM, select bearinmind's Offline saved places and the other desired Ungoogled Maps patches, then select our patch. Do not feed an already enhanced APK back into the patcher. microG is intentionally rejected until separately ported/tested.
 
@@ -18,7 +18,7 @@ Requires Windows x64, the existing private recovery-kit tools, and the official 
   --kotlin-zip 'D:\Tools\kotlin-compiler-2.4.20.zip'
 ```
 
-The compiler reads the patch API from the checksum-pinned Morphe Desktop JAR; those classes are compile-only and are not redistributed inside our MPP. Kotlin language/metadata 2.2 and Java 11 bytecode are used for the patch, while the runtime helpers target Java 8 / Android API 32. This avoids a Gradle/GitHub Packages dependency during this small bundle build. The script runs the route-ownership tests, generates patches-list.json from the compiled patch, and outputs a deterministic MPP plus a source hash manifest to dist/.
+The compiler reads the patch API from the checksum-pinned Morphe Desktop JAR; those classes are compile-only and are not redistributed inside our MPP. Kotlin language/metadata 2.2 and Java 11 bytecode are used for the patch, while the runtime helpers target Java 8 / Android API 32. This avoids a Gradle/GitHub Packages dependency during this small bundle build. The script runs the route-ownership and label matching tests, generates patches-list.json from the compiled patch, and outputs a deterministic MPP plus a source hash manifest to dist/.
 
 ## Release/update procedure
 

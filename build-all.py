@@ -47,7 +47,7 @@ def main():
         for name, expected in current["files"].items():
             if sha256(ROOT / name) != expected:
                 raise ValueError("Preserved Morphe source checksum mismatch: " + name)
-        source_manifest = json.loads((ROOT / "vendor/artifacts/tutto-enhancements-1.4.0.sources.json").read_text())
+        source_manifest = json.loads((ROOT / "vendor/artifacts/tutto-enhancements-1.5.0.sources.json").read_text())
         for name, expected in source_manifest.items():
             if sha256(ROOT / name) != expected:
                 raise ValueError("Tutto bundle is stale. Rebuild and release it after changing: " + name)
@@ -90,7 +90,7 @@ def main():
         print("Applying bearinmind 2.5.5 and Tutto Enhancements together.", flush=True)
         run(java, "-Xmx4g", "-jar", cli, "patch",
             "-p", ROOT / "vendor/artifacts/patches-2.5.5.mpp",
-            "-p", ROOT / "vendor/artifacts/tutto-enhancements-1.4.0.mpp",
+            "-p", ROOT / "vendor/artifacts/tutto-enhancements-1.5.0.mpp",
             "--options-file", ROOT / "config/morphe-combined-options.json",
             "--bytecode-mode", "FULL", "--unsigned", "-o", unsigned,
             "-t", work / "morphe-temp", "-r", work / "morphe-result.json",

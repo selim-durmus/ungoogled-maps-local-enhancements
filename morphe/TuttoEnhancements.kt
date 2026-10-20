@@ -54,7 +54,28 @@ private fun BytecodePatchContext.checkBindings() {
     field(store, "home", PLACE); field(store, "work", PLACE)
     field(PLACE, "lat", "D"); field(PLACE, "lng", "D")
     method(store, "load", "V", CONTEXT)
-    method("${UI}SavedPlaces;", "directions", "V", CONTEXT, PLACE)
+}
+
+/** Calls [helper]'s resume/pause from Local saved's activity callbacks. */
+private fun BytecodePatchContext.hookLifecycle(helper: String) {
+    for ((event, action) in listOf("Resumed" to "resume", "Paused" to "pause", "Destroyed" to "pause")) {
+        val m = method("${UI}SavedPlaces\$Front;", "onActivity$event", "V", ACTIVITY)
+        // LocalMarkers and LocalLabels were 1.3.x helpers that already drew labels.
+        requireCompatible(!m.calls(helper) && !m.calls("${UI}LocalMarkers;") && !m.calls("${UI}LocalLabels;"),
+            "The input already contains our enhancements; start from the original APK")
+        m.addInstructions(0, """
+            invoke-static {p1}, $helper->$action($ACTIVITY)V
+        """)
+    }
+}
+
+private val maps = Compatibility(name = "Google Maps", packageName = "com.google.android.apps.maps",
+    apkFileType = ApkFileType.APKM, appIconColor = 0xFFFFFF,
+    targets = listOf(AppTarget(version = "26.36.04.973607363")))
+
+// Unnamed: merges our helper DEX once, whichever of the patches below are selected.
+private val tuttoExtensionPatch = bytecodePatch {
+    extendWith("extensions/tutto.mpe")
 }
 
 @Suppress("unused")
@@ -66,21 +87,33 @@ val tuttoEnhancementsPatch = bytecodePatch(
         "26.36.04.973607363. Does not support Add microG support.",
     default = true,
 ) {
-    compatibleWith(Compatibility(name = "Google Maps", packageName = "com.google.android.apps.maps",
-        apkFileType = ApkFileType.APKM, appIconColor = 0xFFFFFF,
-        targets = listOf(AppTarget(version = "26.36.04.973607363"))))
-    extendWith("extensions/tutto.mpe")
+    compatibleWith(maps)
+    dependsOn(tuttoExtensionPatch)
     // A cross-source dependsOn would bundle/execute another copy of upstream patches.
     // Finalize runs after ALL execute blocks; validate upstream ABI before touching its methods.
     finalize {
         checkBindings()
-        for ((event, action) in listOf("Resumed" to "resume", "Paused" to "pause", "Destroyed" to "pause")) {
-            val m = method("${UI}SavedPlaces\$Front;", "onActivity$event", "V", ACTIVITY)
-            requireCompatible(!m.calls("${UI}HomeWorkShortcuts;") && !m.calls("${UI}LocalMarkers;"),
-                "The input already contains our enhancements; start from the original APK")
-            m.addInstructions(0, """
-                invoke-static {p1}, ${UI}HomeWorkShortcuts;->$action($ACTIVITY)V
-            """)
-        }
+        method("${UI}SavedPlaces;", "directions", "V", CONTEXT, PLACE)
+        hookLifecycle("${UI}HomeWorkShortcuts;")
+    }
+}
+
+@Suppress("unused")
+val labelSuggestionsPatch = bytecodePatch(
+    name = "Label search suggestions",
+    description = "While you type in Maps' search box, shows up to three matching Home, Work and Local saved " +
+        "labels above Google's suggestions (exact, then prefix, then substring; case and accents ignored). " +
+        "Tap one to open the place. Select alongside bearinmind's Offline saved places. Built for " +
+        "bearinmind 2.5.5 and Maps 26.36.04.973607363. Does not support Add microG support.",
+    default = true,
+) {
+    compatibleWith(maps)
+    dependsOn(tuttoExtensionPatch)
+    finalize {
+        checkBindings()
+        field("${UI}SavedStore;", "labels", "Ljava/util/Map;")
+        field(PLACE, "name", "Ljava/lang/String;"); field(PLACE, "ftid", "Ljava/lang/String;")
+        method("${UI}SavedPlaces;", "open", "V", CONTEXT, PLACE)
+        hookLifecycle("${UI}LabelSuggestions;")
     }
 }

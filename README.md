@@ -1,18 +1,21 @@
 # Tutto Enhancements for Ungoogled Maps
 
-A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) that adds native Home and Work shortcut chips beside Maps' category carousel. A shortcut opens directions to the destination saved in Local saved and, on Back, clears its temporary coordinate selection.
+A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) with two independent patches:
 
-This repository is also a **Morphe patch source named Tutto Enhancements**. Its MPP adds the shortcuts alongside bearinmind's patches in one patching run. The repository preserves both compiled bundles, upstream source, our source, and an offline PC build process.
+- **Home and Work shortcuts**: native Home and Work chips beside Maps' category carousel. A shortcut opens directions to the destination saved in Local saved and, on Back, clears its temporary coordinate selection.
+- **Label search suggestions**: while you type in Maps' search box, up to three matching Home, Work and Local saved labels appear above Google's suggestions. Tap one to open the place.
+
+This repository is also a **Morphe patch source named Tutto Enhancements**. Its MPP adds these patches alongside bearinmind's patches in one patching run. The repository preserves both compiled bundles, upstream source, our source, and an offline PC build process.
 
 ## What moved to bearinmind's patch (1.4.0)
 
-bearinmind 2.5.x's **Offline saved places** now covers what our 1.3.x markers and labels did (upstream issue #36), so using both drew every place and label twice. Tutto 1.4.0 keeps only the Home/Work shortcuts. Upstream now provides:
+bearinmind 2.5.x's **Offline saved places** now covers most of what our 1.3.x markers and labels did (upstream issue #36), so using both drew every place and label twice. Since 1.4.0 Tutto keeps only what upstream lacks. Upstream now provides:
 
 - Home, Work, your labels and every saved list on Maps' own map, drawn by Maps' personal-place layer with each list's icon: a heart for Favorites, a flag for Want to go, a suitcase for Travel plans, **a star for Starred places**, a pin for other lists. Each list has a Hide on map / Show on map switch in Local saved.
 - Typing a label (Home, Work or your own) in search and submitting it opens that place; directions to a label work too.
 - Maps' Add label prompt and Local saved's label editor store labels on the phone.
 
-Two 1.3.x behaviours have no upstream equivalent: up to three matching local labels shown *as you type* (ours matched prefixes and ignored accents; upstream matches the whole label when submitted), and our numbered grouping of nearby markers (Maps' own layer handles overlaps now). Use tag `v1.3.1` with bearinmind 1.7.4 if you need those.
+Upstream matches a label only when the whole label is submitted. Since 1.5.0, **Label search suggestions** brings back the 1.3.x suggestions *as you type* (exact, then prefix, then substring; case and accents ignored) as its own patch, without our old markers, captions or label editors. Our numbered grouping of nearby markers has no replacement; Maps' own layer handles overlaps now.
 
 ## Use in Morphe Manager
 
@@ -20,10 +23,10 @@ Two 1.3.x behaviours have no upstream equivalent: up to three matching local lab
 
 1. In Expert mode select the original Google Maps **26.36.04.973607363** APK/APKM.
 2. Select bearinmind's normal Ungoogled Maps patches, including **Offline saved places**, **Change package name**, and **Hide ads and clutter**. Leave **Add microG support** off.
-3. Under **Tutto Enhancements**, select **Home and Work shortcuts**. (1.3.x called it "Home, Work, markers and labels".)
+3. Under **Tutto Enhancements**, select **Home and Work shortcuts** and/or **Label search suggestions**. (1.3.x had a single "Home, Work, markers and labels" patch.)
 4. Patch once. Use the same signing key and package name as your installed app to update without uninstalling.
 
-Built for bearinmind **2.5.5** and Morphe Manager **1.34.0** / Desktop **1.18.1**. The patch validates the upstream code it needs after all patch execution blocks have run; tab order does not establish dependencies. Missing Local saved support and the microG variant fail with a clear message. The 1.4.0 MPP was compiled and its references were checked against bearinmind 2.5.5's extension, but a full patch-and-device run is still to be done. Future upstream releases still need compatibility review.
+Built for bearinmind **2.5.5** and Morphe Manager **1.34.0** / Desktop **1.18.1**. The patch validates the upstream code it needs after all patch execution blocks have run; tab order does not establish dependencies. Missing Local saved support and the microG variant fail with a clear message. The 1.5.0 MPP was compiled and its references were checked against bearinmind 2.5.5's extension, but a full patch-and-device run is still to be done. Future upstream releases still need compatibility review.
 
 The patch source contains no signing key, Google APK, or saved places. A fresh Morphe installation may have a different key; do not uninstall your current Maps app to bypass a signing conflict. See [Morphe source and development](docs/MORPHE-SOURCE.md).
 
@@ -54,7 +57,9 @@ See [Recovery and Morphe workflow](docs/RECOVERY.md) for archive contents, fresh
 - On Back from a shortcut route, dismisses only the matching temporary coordinate selection using Maps' native clear action.
 - Preserves ordinary search and active navigation; adds no network client.
 
-The `v1.0.0` tag preserves the original Home/Work-only checkpoint; 1.4.0 ships the same `HomeWorkShortcuts.java`. Tags `v1.1.0` to `v1.3.1` hold the markers and labels that bearinmind's patch now replaces.
+Label search suggestions reads Home, Work and labels from Local saved and draws a "Your labels" block above the native suggestion list while the search box has focus. Matching ignores case, accents and extra spaces; exact matches come first, then prefixes and substrings, at most three rows. If a landscape keyboard leaves too little room, dismiss it to see the rows. It adds no network client, but the native search field still runs Google's ordinary autocomplete: text typed there may be sent to Google.
+
+The `v1.0.0` tag preserves the original Home/Work-only checkpoint; 1.4.0 and later ship the same `HomeWorkShortcuts.java`. Tags `v1.1.0` to `v1.3.1` hold the markers and labels that bearinmind's patch now replaces.
 
 ## Supported baseline
 
@@ -134,6 +139,6 @@ APK bytes may differ across rebuilds because packaging/signing metadata can diff
 
 ## Repository contents and license
 
-`src/` contains the extension, `stubs/` contains compile-time signatures only, `tests/` contains the coordinate-ownership checks, and `build.py` holds shared build helpers plus the legacy post-patch builder. APKs, decompiled Maps classes, Google resources, signing material, private places, and device screenshots are excluded.
+`src/` contains the extension, `stubs/` contains compile-time signatures only, `tests/` contains the coordinate-ownership and label matching checks, and `build.py` holds shared build helpers plus the legacy post-patch builder. APKs, decompiled Maps classes, Google resources, signing material, private places, and device screenshots are excluded.
 
 GPL-3.0; see [LICENSE](LICENSE). The extension depends on local-saved functionality from bearinmindcat's GPL-licensed Morphe patches. This project is independent of Google and the upstream publisher and is not an endorsement by either.

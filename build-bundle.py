@@ -15,7 +15,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build import ROOT, jar_classes, run, sha256
 
-VERSION = "1.4.0"
+VERSION = "1.5.0"
 REPO = "https://github.com/selim-durmus/ungoogled-maps-local-enhancements"
 COMPILER_SHA = "59e9ca74c7904ef2c122b12114937673ccce68de820a663f0ed66ccf8799e0b7"
 
@@ -49,7 +49,8 @@ def main():
     sources = sorted(f for directory in ("src", "stubs", "tests") for f in (ROOT / directory).rglob("*.java"))
     run(javac, "-encoding", "UTF-8", "--release", "8", "-cp", android, "-d", classes, *sources)
     run(java, "-cp", str(classes) + os.pathsep + str(android), "org.ungoogled.ui.RouteGuardTest")
-    jar_classes(work / "helpers.jar", classes, "HomeWorkShortcuts*.class")
+    run(java, "-cp", classes, "org.ungoogled.ui.LabelIndexTest")
+    jar_classes(work / "helpers.jar", classes, "HomeWorkShortcuts*.class|LabelSuggestions*.class|LabelIndex.class")
     jar_classes(work / "stubs.jar", classes, "Saved*.class")
     extension = work / "extension"
     extension.mkdir()
@@ -71,7 +72,7 @@ def main():
         "--classpath", api, "--output", patch_dex, work / "patch.jar")
     manifest = {
         "Manifest-Version": "1.0", "Name": "Tutto Enhancements",
-        "Description": "Home and Work shortcuts for Ungoogled Maps.",
+        "Description": "Home and Work shortcuts and label search suggestions.",
         "Version": VERSION, "Source": REPO, "Author": "selim-durmus",
         "Contact": "https://github.com/selim-durmus", "Website": REPO,
         "License": "GPLv3", "Patcher-Version": "1.15.1",

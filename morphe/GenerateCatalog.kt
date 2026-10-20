@@ -2,14 +2,14 @@ package tutto.build
 
 import kotlinx.serialization.json.*
 import java.io.File
+import tutto.patches.labelSuggestionsPatch
 import tutto.patches.tuttoEnhancementsPatch
 
 /** Build tool only; deliberately excluded from both the MPP and APK. */
 fun main(args: Array<String>) {
-    val p = tuttoEnhancementsPatch
     val catalog = mapOf(
         "version" to args[0],
-        "patches" to listOf(mapOf(
+        "patches" to listOf(tuttoEnhancementsPatch, labelSuggestionsPatch).map { p -> mapOf(
             "name" to p.name, "description" to p.description, "default" to p.default,
             "category" to p.category, "dependencies" to emptyList<String>(), "options" to emptyList<String>(),
             "compatiblePackages" to p.compatibility!!.map { c -> mapOf(
@@ -18,7 +18,7 @@ fun main(args: Array<String>) {
                 "targets" to c.targets.map { t -> mapOf("version" to t.version, "versionCodes" to null,
                     "isExperimental" to t.isExperimental, "minSdk" to t.minSdk, "description" to t.description) }
             ) }
-        ))
+        ) }
     )
     fun json(v: Any?): JsonElement = when (v) {
         null -> JsonNull

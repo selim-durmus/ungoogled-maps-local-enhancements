@@ -8,7 +8,7 @@ The full pipeline is:
 
 1. Verify the stock Maps APK and tool hashes against config/build-lock.json.
 2. Verify both bundles against config/morphe-source-lock.json and our bundle's source checksums.
-3. Run the preserved Morphe Desktop CLI with bearinmind 2.5.5 and Tutto Enhancements 1.4.0, using config/morphe-combined-options.json.
+3. Run the preserved Morphe Desktop CLI with bearinmind 2.5.5 and Tutto Enhancements 1.5.0, using config/morphe-combined-options.json.
 4. Apply 21 upstream patches plus our enhancement patch in FULL bytecode mode. Ad hiding is included; microG is disabled.
 5. Align, sign with the same key, and compare the output certificate with the preserved working app.
 
