@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add Home/Work shortcuts, local map markers and labels to a patched Maps APK.
+"""Legacy (tag v1.3.1 and earlier): add Home/Work shortcuts, local map markers and labels to a patched Maps APK.
 
 Uses only the Python standard library; external dependencies are documented in README.
 No download, installation, key generation, or device-data operations are performed.
@@ -156,6 +156,10 @@ def main():
     parser.add_argument("--key-password-file", type=Path)
     parser.add_argument("--key-alias", default="morphe")
     args = parser.parse_args()
+    if not (ROOT / "src/org/ungoogled/ui/LocalMarkers.java").is_file():
+        # Since 1.4.0 bearinmind's Offline saved places draws saved places and labels itself.
+        raise SystemExit("This legacy post-patch builder adds our own markers and labels for upstream 1.3.0. "
+                         "Run it from a checkout of tag v1.3.1.")
     if args.sdk is None:
         parser.error("Set --sdk or ANDROID_SDK_ROOT")
     args.sdk = args.sdk.resolve()

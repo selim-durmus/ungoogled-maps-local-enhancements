@@ -1,8 +1,18 @@
 # Tutto Enhancements for Ungoogled Maps
 
-A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) containing native Home/Work shortcuts, saved-place map markers, and local labels connected to search and map captions. The shortcuts clear their temporary coordinate selection on return; the markers support taps, grouping, smooth movement, natural edge clipping, and icons styled for dark maps.
+A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) that adds native Home and Work shortcut chips beside Maps' category carousel. A shortcut opens directions to the destination saved in Local saved and, on Back, clears its temporary coordinate selection.
 
-This repository is also a **Morphe patch source named Tutto Enhancements**. Its MPP adds our features alongside bearinmind's patches in one patching run. The repository preserves both compiled bundles, upstream source, our source, and an offline PC build process.
+This repository is also a **Morphe patch source named Tutto Enhancements**. Its MPP adds the shortcuts alongside bearinmind's patches in one patching run. The repository preserves both compiled bundles, upstream source, our source, and an offline PC build process.
+
+## What moved to bearinmind's patch (1.4.0)
+
+bearinmind 2.5.x's **Offline saved places** now covers what our 1.3.x markers and labels did (upstream issue #36), so using both drew every place and label twice. Tutto 1.4.0 keeps only the Home/Work shortcuts. Upstream now provides:
+
+- Home, Work, your labels and every saved list on Maps' own map, drawn by Maps' personal-place layer with each list's icon: a heart for Favorites, a flag for Want to go, a suitcase for Travel plans, **a star for Starred places**, a pin for other lists. Each list has a Hide on map / Show on map switch in Local saved.
+- Typing a label (Home, Work or your own) in search and submitting it opens that place; directions to a label work too.
+- Maps' Add label prompt and Local saved's label editor store labels on the phone.
+
+Two 1.3.x behaviours have no upstream equivalent: up to three matching local labels shown *as you type* (ours matched prefixes and ignored accents; upstream matches the whole label when submitted), and our numbered grouping of nearby markers (Maps' own layer handles overlaps now). Use tag `v1.3.1` with bearinmind 1.7.4 if you need those.
 
 ## Use in Morphe Manager
 
@@ -10,12 +20,10 @@ This repository is also a **Morphe patch source named Tutto Enhancements**. Its 
 
 1. In Expert mode select the original Google Maps **26.36.04.973607363** APK/APKM.
 2. Select bearinmind's normal Ungoogled Maps patches, including **Offline saved places**, **Change package name**, and **Hide ads and clutter**. Leave **Add microG support** off.
-3. Under **Tutto Enhancements**, select **Home, Work, markers and labels**.
+3. Under **Tutto Enhancements**, select **Home and Work shortcuts**. (1.3.x called it "Home, Work, markers and labels".)
 4. Patch once. Use the same signing key and package name as your installed app to update without uninstalling.
 
-Tested combination: bearinmind **1.7.4**, Tutto **1.3.0**, Morphe Manager **1.34.0** / Desktop **1.18.1**. One checkbox includes all our features because markers and labels share their controller. The patch validates required upstream code after all patch execution blocks have run; tab order does not establish dependencies. Missing Local saved support and the microG variant fail with a clear message. Future upstream releases still need compatibility review; successful structural checks alone cannot guarantee runtime behavior.
-
-Latest Tutto release: **1.3.1**, fixing marker touch interception during rotation, pinch and dragging. Refresh this source in Morphe to obtain it. The runtime touch fix passed 15 Android emulator regression checks; the full Maps/Manager build combination above was verified with 1.3.0. See [1.3.1 verification](docs/touch-verification-1.3.1.md) for the test scope.
+Built for bearinmind **2.5.5** and Morphe Manager **1.34.0** / Desktop **1.18.1**. The patch validates the upstream code it needs after all patch execution blocks have run; tab order does not establish dependencies. Missing Local saved support and the microG variant fail with a clear message. The 1.4.0 MPP was compiled and its references were checked against bearinmind 2.5.5's extension, but a full patch-and-device run is still to be done. Future upstream releases still need compatibility review.
 
 The patch source contains no signing key, Google APK, or saved places. A fresh Morphe installation may have a different key; do not uninstall your current Maps app to bypass a signing conflict. See [Morphe source and development](docs/MORPHE-SOURCE.md).
 
@@ -25,17 +33,15 @@ Clone this repository and extract your encrypted private recovery archive. The a
 
 Run from the cloned repository in PowerShell:
 
-    .\build-all.ps1 -RecoveryRoot 'D:\Maps Recovery\recovery-kit'
+    .uild-all.ps1 -RecoveryRoot 'D:\Maps Recoveryecovery-kit'
 
-The script verifies pinned input/tool hashes, applies bearinmind 1.7.4's 21 default patches plus Tutto Enhancements, signs the result, and prints its location under dist. Ad hiding is included. No system-wide Java, Python, Android SDK or Morphe Manager installation is needed. No files are downloaded and no phone is modified. Changed feature source requires rebuilding the Tutto MPP before this command will proceed.
+The script verifies pinned input/tool hashes, applies bearinmind 2.5.5's default Maps patches plus Tutto Enhancements, signs the result, and prints its location under dist. Ad hiding is included. No system-wide Java, Python, Android SDK or Morphe Manager installation is needed. No files are downloaded and no phone is modified. Changed feature source requires rebuilding the Tutto MPP before this command will proceed.
 
-To use the legacy v1.3.0 upstream baseline instead (without the new upstream fixes/clutter controls):
-
-    .\build-all.ps1 -RecoveryRoot 'D:\Maps Recovery\recovery-kit' -From baseline
+The legacy upstream v1.3.0 baseline path (`-From baseline`) needs our own markers and labels, so it now runs only from a checkout of tag `v1.3.1`.
 
 To test with Java network access denied:
 
-    .\build-all.ps1 -RecoveryRoot 'D:\Maps Recovery\recovery-kit' -VerifyOffline
+    .uild-all.ps1 -RecoveryRoot 'D:\Maps Recoveryecovery-kit' -VerifyOffline
 
 See [Recovery and Morphe workflow](docs/RECOVERY.md) for archive contents, fresh-machine recovery, version limitations and the distinction between building an APK and recompiling upstream patches.
 
@@ -47,17 +53,8 @@ See [Recovery and Morphe workflow](docs/RECOVERY.md) for archive contents, fresh
 - Uses the existing local-saved directions action.
 - On Back from a shortcut route, dismisses only the matching temporary coordinate selection using Maps' native clear action.
 - Preserves ordinary search and active navigation; adds no network client.
-- Shows up to three matching local labels above native search suggestions: exact matches first, then prefixes and substrings. Matching ignores case and accents; refine the query to narrow a larger set. If a landscape keyboard leaves too little room, dismiss it to see local results.
-- Draws labels beside individual markers when space permits, and uses labels in marker selection. Label-only places appear too.
-- Connects the native Add label button, overflow action and Local saved editor to the same local label store. Supports add, rename and remove without sign-in, and prevents assigning the same normalized label to different places.
 
-Labels use the publisher's existing storage and export format. No migration is required; existing labels become searchable. Removing a label preserves the saved place and its list memberships. Home/Work remain reserved labels with their existing destination behavior. Label entry is local, but the native search field still runs Google's ordinary autocomplete: text typed there may be sent to Google. This extension does not make Maps search offline or private.
-
-Captions avoid our other markers/captions and native controls, but cannot detect Google's road/POI text or building occlusion. Crowded markers group; zoom in to see individual captions. A place with several labels displays one caption, while all aliases remain searchable. The place sheet retains Google's title and may still call its action “Add label”; the local dialog opens the existing label for editing.
-
-The marker extension reads Local saved, draws Home/Work and saved-list icons using Maps' projection, and opens a place when tapped. Its 24 dp circles use a soft palette, dark glyphs, and a slate rim tuned for dark maps; tap targets remain 44 dp. Nearby points form a numbered marker with a place chooser. Partially visible markers are clipped naturally at the screen sides instead of disappearing when their first edge crosses the viewport. Markers follow pan, zoom, rotation and tilt, and refresh after saves change. Position updates run on Android display frames rather than a 33 ms timer; saved-store refresh remains once per second. This improves motion alignment but remains a separate overlay, so exact compositor synchronization is not guaranteed. They are shown on the main browse map and hidden on route/navigation and place-detail screens.
-
-The `v1.0.0` tag preserves the original Home/Work-only checkpoint. Markers and labels do not change `HomeWorkShortcuts.java`. No ETA labels are included. The local layer does not reproduce Google's native label collision, building occlusion, or account-backed saved layer.
+The `v1.0.0` tag preserves the original Home/Work-only checkpoint; 1.4.0 ships the same `HomeWorkShortcuts.java`. Tags `v1.1.0` to `v1.3.1` hold the markers and labels that bearinmind's patch now replaces.
 
 ## Supported baseline
 
@@ -65,7 +62,7 @@ The `v1.0.0` tag preserves the original Home/Work-only checkpoint. Markers and l
 | --- | --- |
 | Maps | `26.36.04.973607363` / version code `1068763346` |
 | Package | `org.ungoogled.android.apps.maps` |
-| Upstream patches | v1.7.4 for stock builds; v1.3.0 for the legacy baseline path |
+| Upstream patches | v2.5.5 for stock builds; v1.3.0 for the legacy baseline path (tag v1.3.1) |
 | Java | JDK 17; helper targets Java 8 |
 | Python | 3.11+; standard library only |
 | Android SDK | Platform 36, Build Tools 36.0.0 |
@@ -73,9 +70,9 @@ The `v1.0.0` tag preserves the original Home/Work-only checkpoint. Markers and l
 
 **A newer Maps version requires porting and testing.** The code uses version-specific resource IDs and obfuscated Chip internals. The build rejects a different Maps version; do not simply remove that check. Even changes to upstream patches on the same Maps version require review and a device smoke test. See [maintenance instructions](docs/MAINTENANCE.md).
 
-## Build
+## Legacy build (tag v1.3.1)
 
-The instructions below describe the lower-level enhancement-only builder. For a complete stock-to-final APK build, use the command above.
+The instructions below describe the lower-level enhancement-only builder. It adds our own markers and labels, so run it from a checkout of tag `v1.3.1`; on 1.4.0 it stops with that message. For a complete stock-to-final APK build, use the command above.
 
 Install Python, a JDK with `java` and `javac` on PATH, the Android SDK components above, and the Apktool JAR. Obtain the original Maps APK and patch it with the publisher's Morphe patches, including local saved places and the package name above. Use that fresh output as input; do not feed this extension's own output back into the tool.
 
@@ -137,6 +134,6 @@ APK bytes may differ across rebuilds because packaging/signing metadata can diff
 
 ## Repository contents and license
 
-`src/` contains the extension, `stubs/` contains compile-time signatures only, `tests/` contains coordinate-ownership, marker geometry and label matching checks, and `build.py` performs the post-patch build. APKs, decompiled Maps classes, Google resources, signing material, private places, and device screenshots are excluded.
+`src/` contains the extension, `stubs/` contains compile-time signatures only, `tests/` contains the coordinate-ownership checks, and `build.py` holds shared build helpers plus the legacy post-patch builder. APKs, decompiled Maps classes, Google resources, signing material, private places, and device screenshots are excluded.
 
 GPL-3.0; see [LICENSE](LICENSE). The extension depends on local-saved functionality from bearinmindcat's GPL-licensed Morphe patches. This project is independent of Google and the upstream publisher and is not an endorsement by either.

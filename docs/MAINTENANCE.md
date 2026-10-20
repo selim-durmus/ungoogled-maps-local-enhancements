@@ -1,6 +1,6 @@
 # Reapplying after upstream updates
 
-The v1.0.0 checkpoint includes native Home/Work chips and Back cleanup. The marker feature branch also contains LocalMarkers and MarkerGeometry.
+The v1.0.0 checkpoint includes native Home/Work chips and Back cleanup. Since 1.4.0 that is again the whole extension: bearinmind's Offline saved places draws saved places and labels on the map. The marker and label notes below describe tags v1.1.0 to v1.3.1.
 
 ## Marker implementation
 

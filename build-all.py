@@ -30,6 +30,10 @@ def main():
     parser.add_argument("--verify-offline", action="store_true",
                         help="Deny Java socket connections during this build using JDK 21 policy.")
     args = parser.parse_args()
+    if args.source == "baseline":
+        # Upstream 1.3.0 has no saved places on the map; its markers/labels path lives at tag v1.3.1.
+        raise ValueError("The legacy baseline build needs our own markers and labels: run it from a "
+                         "checkout of tag v1.3.1 (git worktree add ../maps-v1.3.1 v1.3.1)")
     kit = args.recovery_root.resolve()
     lock = json.loads((ROOT / "config/build-lock.json").read_text(encoding="utf-8"))
     source_name = "inputs/maps-" + args.source + ".apk"
@@ -43,7 +47,7 @@ def main():
         for name, expected in current["files"].items():
             if sha256(ROOT / name) != expected:
                 raise ValueError("Preserved Morphe source checksum mismatch: " + name)
-        source_manifest = json.loads((ROOT / "vendor/artifacts/tutto-enhancements-1.3.1.sources.json").read_text())
+        source_manifest = json.loads((ROOT / "vendor/artifacts/tutto-enhancements-1.4.0.sources.json").read_text())
         for name, expected in source_manifest.items():
             if sha256(ROOT / name) != expected:
                 raise ValueError("Tutto bundle is stale. Rebuild and release it after changing: " + name)
@@ -83,10 +87,10 @@ def main():
         cli = work / "tools/morphe-desktop.jar"
         cli.parent.mkdir()
         shutil.copy2(kit / "tools/morphe-desktop.jar", cli)
-        print("Applying bearinmind 1.7.4 and Tutto Enhancements together.", flush=True)
+        print("Applying bearinmind 2.5.5 and Tutto Enhancements together.", flush=True)
         run(java, "-Xmx4g", "-jar", cli, "patch",
-            "-p", ROOT / "vendor/artifacts/patches-1.7.4.mpp",
-            "-p", ROOT / "vendor/artifacts/tutto-enhancements-1.3.1.mpp",
+            "-p", ROOT / "vendor/artifacts/patches-2.5.5.mpp",
+            "-p", ROOT / "vendor/artifacts/tutto-enhancements-1.4.0.mpp",
             "--options-file", ROOT / "config/morphe-combined-options.json",
             "--bytecode-mode", "FULL", "--unsigned", "-o", unsigned,
             "-t", work / "morphe-temp", "-r", work / "morphe-result.json",
