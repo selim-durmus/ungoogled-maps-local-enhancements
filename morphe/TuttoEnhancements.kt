@@ -103,8 +103,8 @@ val labelSuggestionsPatch = bytecodePatch(
     name = "Label search suggestions",
     description = "While you type in Maps' search box, shows up to three matching Home, Work and Local saved " +
         "labels above Google's suggestions (exact, then prefix, then substring; case and accents ignored). " +
-        "Tap one to open the place. Select alongside bearinmind's Offline saved places. Built for " +
-        "bearinmind 2.5.5 and Maps 26.36.04.973607363. Does not support Add microG support.",
+        "Tap one to open the place, or in directions to set the stop being edited. Select alongside " +
+        "bearinmind's Offline saved places. Built for bearinmind 2.5.5 and Maps 26.36.04.973607363. Does not support Add microG support.",
     default = true,
 ) {
     compatibleWith(maps)
@@ -113,7 +113,9 @@ val labelSuggestionsPatch = bytecodePatch(
         checkBindings()
         field("${UI}SavedStore;", "labels", "Ljava/util/Map;")
         field(PLACE, "name", "Ljava/lang/String;"); field(PLACE, "ftid", "Ljava/lang/String;")
-        method("${UI}SavedPlaces;", "open", "V", CONTEXT, PLACE)
+        // A tapped label is submitted through Maps' search box; these turn it into the place.
+        method("${UI}SavedPlaces;", "searchLabel", "Z", "Ljava/lang/String;")
+        method("${UI}SavedPlaces;", "labelWaypoint", "V", "Ljava/lang/Object;", "Ljava/lang/String;")
         hookLifecycle("${UI}LabelSuggestions;")
     }
 }

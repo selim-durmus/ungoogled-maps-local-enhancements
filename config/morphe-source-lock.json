@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "bundle_name": "Tutto Enhancements",
-  "bundle_version": "1.5.0",
+  "bundle_version": "1.5.1",
   "maps_version": "26.36.04.973607363",
   "maps_version_code": "1068763346",
   "upstream_release": "v2.5.5",
@@ -13,6 +13,6 @@
   "files": {
     "vendor/artifacts/patches-2.5.5.mpp": "98634f24bbc0e595b38eb23d458cbcaced3a6cb16c32add9530e666d4f2eb0e8",
     "vendor/artifacts/morphe-patches-2.5.5-source.tar.gz": "5f724245df7ac941d8c150bf39e6a1dc38f6859366d87840176085e496d09054",
-    "vendor/artifacts/tutto-enhancements-1.5.0.mpp": "9397dc849cf1ff7020b4299fdec5f728bab11d6df007d150f97ed2eda96a504d"
+    "vendor/artifacts/tutto-enhancements-1.5.1.mpp": "b7319806387f864a5cb2477b2c9e96a225d7cd931008264704cc7b5768d10a4c"
   }
 }

@@ -93,8 +93,8 @@
   },
   {
     "meta": {
-      "source": "tutto-enhancements-1.5.0.mpp",
-      "sha256": "9397dc849cf1ff7020b4299fdec5f728bab11d6df007d150f97ed2eda96a504d"
+      "source": "tutto-enhancements-1.5.1.mpp",
+      "sha256": "b7319806387f864a5cb2477b2c9e96a225d7cd931008264704cc7b5768d10a4c"
     },
     "patches": {
       "Home and Work shortcuts": {

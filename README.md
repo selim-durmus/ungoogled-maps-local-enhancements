@@ -3,7 +3,7 @@
 A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) with two independent patches:
 
 - **Home and Work shortcuts**: native Home and Work chips beside Maps' category carousel. A shortcut opens directions to the destination saved in Local saved and, on Back, clears its temporary coordinate selection.
-- **Label search suggestions**: while you type in Maps' search box, up to three matching Home, Work and Local saved labels appear above Google's suggestions. Tap one to open the place.
+- **Label search suggestions**: while you type in Maps' search box, up to three matching Home, Work and Local saved labels appear above Google's suggestions. Tap one to open the place; in the directions editor, it sets only the start or stop you are editing.
 
 This repository is also a **Morphe patch source named Tutto Enhancements**. Its MPP adds these patches alongside bearinmind's patches in one patching run. The repository preserves both compiled bundles, upstream source, our source, and an offline PC build process.
 
@@ -26,7 +26,7 @@ Upstream matches a label only when the whole label is submitted. Since 1.5.0, **
 3. Under **Tutto Enhancements**, select **Home and Work shortcuts** and/or **Label search suggestions**. (1.3.x had a single "Home, Work, markers and labels" patch.)
 4. Patch once. Use the same signing key and package name as your installed app to update without uninstalling.
 
-Built for bearinmind **2.5.5** and Morphe Manager **1.34.0** / Desktop **1.18.1**. The patch validates the upstream code it needs after all patch execution blocks have run; tab order does not establish dependencies. Missing Local saved support and the microG variant fail with a clear message. The 1.5.0 MPP was compiled and its references were checked against bearinmind 2.5.5's extension, but a full patch-and-device run is still to be done. Future upstream releases still need compatibility review.
+Built for bearinmind **2.5.5** and Morphe Manager **1.34.0** / Desktop **1.18.1**. The patch validates the upstream code it needs after all patch execution blocks have run; tab order does not establish dependencies. Missing Local saved support and the microG variant fail with a clear message. 1.5.0 was confirmed on the phone. The 1.5.1 MPP was compiled and its references were checked against bearinmind 2.5.5's extension; its directions fix still needs a phone test. Future upstream releases still need compatibility review.
 
 The patch source contains no signing key, Google APK, or saved places. A fresh Morphe installation may have a different key; do not uninstall your current Maps app to bypass a signing conflict. See [Morphe source and development](docs/MORPHE-SOURCE.md).
 
@@ -36,7 +36,7 @@ Clone this repository and extract your encrypted private recovery archive. The a
 
 Run from the cloned repository in PowerShell:
 
-    .uild-all.ps1 -RecoveryRoot 'D:\Maps Recoveryecovery-kit'
+    .\build-all.ps1 -RecoveryRoot 'D:\Maps Recovery\recovery-kit'
 
 The script verifies pinned input/tool hashes, applies bearinmind 2.5.5's default Maps patches plus Tutto Enhancements, signs the result, and prints its location under dist. Ad hiding is included. No system-wide Java, Python, Android SDK or Morphe Manager installation is needed. No files are downloaded and no phone is modified. Changed feature source requires rebuilding the Tutto MPP before this command will proceed.
 
@@ -44,7 +44,7 @@ The legacy upstream v1.3.0 baseline path (`-From baseline`) needs our own marker
 
 To test with Java network access denied:
 
-    .uild-all.ps1 -RecoveryRoot 'D:\Maps Recoveryecovery-kit' -VerifyOffline
+    .\build-all.ps1 -RecoveryRoot 'D:\Maps Recovery\recovery-kit' -VerifyOffline
 
 See [Recovery and Morphe workflow](docs/RECOVERY.md) for archive contents, fresh-machine recovery, version limitations and the distinction between building an APK and recompiling upstream patches.
 

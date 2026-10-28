@@ -1,5 +1,5 @@
 {
-    "version": "1.5.0",
+    "version": "1.5.1",
     "patches": [
         {
             "name": "Home and Work shortcuts",
@@ -30,7 +30,7 @@
         },
         {
             "name": "Label search suggestions",
-            "description": "While you type in Maps' search box, shows up to three matching Home, Work and Local saved labels above Google's suggestions (exact, then prefix, then substring; case and accents ignored). Tap one to open the place. Select alongside bearinmind's Offline saved places. Built for bearinmind 2.5.5 and Maps 26.36.04.973607363. Does not support Add microG support.",
+            "description": "While you type in Maps' search box, shows up to three matching Home, Work and Local saved labels above Google's suggestions (exact, then prefix, then substring; case and accents ignored). Tap one to open the place, or in directions to set the stop being edited. Select alongside bearinmind's Offline saved places. Built for bearinmind 2.5.5 and Maps 26.36.04.973607363. Does not support Add microG support.",
             "default": true,
             "category": null,
             "dependencies": [],

@@ -9,6 +9,7 @@ import android.text.TextWatcher;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.*;
 import java.util.*;
@@ -110,11 +111,7 @@ public final class LabelSuggestions {
                     TextView label=text(m.label,16,0xffe8eaed);label.setTypeface(null,Typeface.BOLD);words.addView(label);
                     words.addView(text(m.place.name==null||m.place.name.isEmpty()?"Saved location":m.place.name,12,0xffbdc1c6));
                     row.addView(words,new LinearLayout.LayoutParams(0,-2,1));row.setContentDescription(m.label+", local labeled place");
-                    row.setFocusable(true);row.setOnClickListener(v->{
-                        InputMethodManager ime=(InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
-                        if(ime!=null)ime.hideSoftInputFromWindow(input.getWindowToken(),0);
-                        input.clearFocus();restore();SavedPlaces.open(activity,m.place);
-                    });header.addView(row,new LinearLayout.LayoutParams(-1,dp(58)));
+                    row.setFocusable(true);row.setOnClickListener(v->submit(m.label));header.addView(row,new LinearLayout.LayoutParams(-1,dp(58)));
                 }
                 View divider=new View(activity);divider.setBackgroundColor(0xff3c4043);header.addView(divider,new LinearLayout.LayoutParams(-1,dp(1)));
                 signature=current;
@@ -125,6 +122,20 @@ public final class LabelSuggestions {
             shift=height;list.setTranslationY(translation+shift);list.setPadding(left,top,right,bottom+shift);
             Rect bounds=new Rect(0,0,list.getWidth(),Math.max(0,list.getHeight()-shift));if(clip!=null)bounds.intersect(clip);
             list.setClipBounds(bounds);header.setVisibility(View.VISIBLE);
+        }
+        /**
+         * Submits the label through Maps' own search box rather than opening the place: the main search
+         * then opens it (bearinmind's searchLabel), while a directions waypoint editor fills only the
+         * stop being edited (labelWaypoint) and keeps the other one.
+         */
+        void submit(String label) {
+            EditText field=input;if(field==null)return;
+            field.setText(label);field.setSelection(field.length());
+            int action=field.getImeOptions()&EditorInfo.IME_MASK_ACTION;
+            field.onEditorAction(action==EditorInfo.IME_ACTION_UNSPECIFIED||action==EditorInfo.IME_ACTION_NONE?EditorInfo.IME_ACTION_SEARCH:action);
+            InputMethodManager ime=(InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
+            if(ime!=null)ime.hideSoftInputFromWindow(field.getWindowToken(),0);
+            field.clearFocus();restore();
         }
         TextView text(String value,int sp,int color){TextView v=new TextView(activity);v.setText(value);v.setTextSize(sp);v.setTextColor(color);
             v.setSingleLine(true);v.setEllipsize(android.text.TextUtils.TruncateAt.END);return v;}
