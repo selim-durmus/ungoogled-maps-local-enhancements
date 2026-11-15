@@ -90,10 +90,20 @@ public final class HomeWorkShortcuts {
         SavedStore.Place lastHome, lastWork;
         int lastInk, lastHeight;
         final int[] origin = new int[2], anchor = new int[2];
+        // Looked up by name: numeric resource IDs change with every Maps release.
+        final int containerId, navId, modeTabsId, queryId, clearId, homeIcon, workIcon, chipText;
 
         Controller(Activity activity) {
             this.activity = activity;
             root = (ViewGroup) activity.getWindow().getDecorView();
+            containerId = resource(activity, "id", "below_search_omnibox_container");
+            navId = resource(activity, "id", "nav_container");
+            modeTabsId = resource(activity, "id", "directions_mode_tabs");
+            queryId = resource(activity, "id", "search_omnibox_text_box");
+            clearId = resource(activity, "id", "search_omnibox_text_clear"); // Maps' native clear-selection action
+            homeIcon = resource(activity, "drawable", "gs_home_vd_theme_24");
+            workIcon = resource(activity, "drawable", "gs_work_vd_theme_24");
+            chipText = resource(activity, "style", "gmm_chip_text_appearance");
             chips = new LinearLayout(activity);
             chips.setOrientation(LinearLayout.HORIZONTAL);
             chips.setGravity(Gravity.CENTER_VERTICAL);
@@ -118,8 +128,8 @@ public final class HomeWorkShortcuts {
 
         void update() throws Exception {
             updateShortcutReturn();
-            View container = root.findViewById(0x7f0b0166); // below_search_omnibox_container, supported APK
-            View nav = root.findViewById(0x7f0b06b9);
+            View container = root.findViewById(containerId);
+            View nav = root.findViewById(navId);
             Rect visible = new Rect();
             boolean front = activity.hasWindowFocus() && container != null && container.isShown()
                     && container.getGlobalVisibleRect(visible) && visible.height() >= dp(32)
@@ -185,36 +195,29 @@ public final class HomeWorkShortcuts {
 
         void addChip(String label, SavedStore.Place destination, boolean work, int ink, int height, TextView sample) throws Exception {
             // Use Maps' own Material Chip and live style values, not a copied background bitmap
-            // or a handmade rounded rectangle. Obfuscated field names are pinned to 26.36.04.
+            // or a handmade rounded rectangle. R8 strips most of Chip's public setters, so the
+            // style goes through obfuscated names pinned to 26.44.06 (see ChipNames).
             Class<?> chipClass = Class.forName("com.google.android.material.chip.Chip");
             if (!chipClass.isInstance(sample)) throw new IllegalStateException("Unsupported category chip");
             TextView button = (TextView) chipClass.getConstructor(android.content.Context.class).newInstance(sample.getContext());
-            Object source = field(sample, "h");
+            Object source = field(sample, ChipNames.DRAWABLE), target = field(button, ChipNames.DRAWABLE);
             // Surface color is separate from the foreground fill in Material ChipDrawable.
-            java.lang.reflect.Field surface = source.getClass().getDeclaredField("b");
+            java.lang.reflect.Field surface = source.getClass().getDeclaredField(ChipNames.SURFACE);
             surface.setAccessible(true);
-            surface.set(field(button, "h"), surface.get(source));
-            String[][] properties = {
-                {"setChipBackgroundColor", "c"}, {"setChipStrokeColor", "e"},
-                {"setChipStrokeWidth", "N"}, {"setChipMinHeight", "d"},
-                {"setChipStartPadding", "m"}, {"setChipEndPadding", "r"},
-                {"setIconStartPadding", "Y"}, {"setIconEndPadding", "Z"},
-                {"setTextStartPadding", "n"}, {"setTextEndPadding", "o"},
-                {"setRippleColor", "f"}, {"setChipIconSize", "R"}, {"setChipIconTint", "Q"}
-            };
-            for (String[] property : properties) {
-                java.lang.reflect.Field f = source.getClass().getDeclaredField(property[1]);
-                f.setAccessible(true);
-                chipClass.getMethod(property[0], f.getType()).invoke(button, f.get(source));
-            }
-            Object shape = source.getClass().getMethod("ad").invoke(source);
-            chipClass.getMethod("setShapeAppearanceModel", Class.forName("bviu")).invoke(button, shape);
-            chipClass.getMethod("setEnsureMinTouchTargetSize", boolean.class).invoke(button, field(sample,"o"));
-            chipClass.getMethod("setCheckable", boolean.class).invoke(button, false);
-            chipClass.getMethod("setCloseIconVisible", boolean.class).invoke(button, false);
-            chipClass.getMethod("setChipIconResource", int.class).invoke(button, work ? 0x7f08063a : 0x7f080587);
-            chipClass.getMethod("setChipIconVisible", boolean.class).invoke(button, true);
-            button.setTextAppearance(0x7f150f99); // gmm_chip_text_appearance
+            surface.set(target, surface.get(source));
+            for (String[] color : ChipNames.COLORS)
+                declared(target.getClass(), color[1], android.content.res.ColorStateList.class)
+                        .invoke(target, field(source, color[0]));
+            call(button, ChipNames.RIPPLE_REFRESH);
+            for (String[] size : ChipNames.SIZES)
+                chipClass.getMethod(size[0], float.class).invoke(button, field(source, size[1]));
+            call(target, ChipNames.SHAPE_SET, call(source, ChipNames.SHAPE_GET));
+            call(button, ChipNames.TOUCH_TARGET_SET, field(sample, ChipNames.TOUCH_TARGET));
+            call(target, ChipNames.CHECKABLE_SET, false);
+            call(button, ChipNames.CLOSE_ICON_VISIBLE_SET, false);
+            chipClass.getMethod("setChipIconResource", int.class).invoke(button, work ? workIcon : homeIcon);
+            call(target, ChipNames.ICON_VISIBLE_SET, true);
+            button.setTextAppearance(chipText);
             button.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, sample.getTextSize());
             button.setTypeface(sample.getTypeface());
             button.setTextColor(sample.getTextColors());
@@ -244,7 +247,7 @@ public final class HomeWorkShortcuts {
             RouteSession route = shortcutRoute;
             if (route == null || route.taskId != activity.getTaskId() || !activity.hasWindowFocus()) return;
             // Both route preview and active guidance own their UI. Never clear during either.
-            if (shown(root.findViewById(0x7f0b0317)) || shown(root.findViewById(0x7f0b06b9))) {
+            if (shown(root.findViewById(modeTabsId)) || shown(root.findViewById(navId))) {
                 route.directionsOpened = true;
                 return;
             }
@@ -254,10 +257,10 @@ public final class HomeWorkShortcuts {
                     shortcutRoute = null;
                 return;
             }
-            View query = root.findViewById(0x7f0b0a5f); // search_omnibox_text_box
+            View query = root.findViewById(queryId);
             if (!shown(query)) return;
             if (query.hasFocus()) { shortcutRoute = null; return; } // User is editing/searching.
-            View clear = root.findViewById(0x7f0b0a60); // Maps' native clear-selection action
+            View clear = root.findViewById(clearId);
             if (matchesQuery(query, route)) {
                 if (shown(clear) && clear.isEnabled()) {
                     // Consume before invoking native UI code, so this happens at most once.
@@ -287,10 +290,76 @@ public final class HomeWorkShortcuts {
         }
     }
 
+    /** A Maps resource by name; throws if this Maps version no longer has it. */
+    static int resource(Activity activity, String type, String name) {
+        int id = activity.getResources().getIdentifier(name, type, activity.getPackageName());
+        if (id == 0) throw new IllegalStateException("Maps resource missing: " + type + "/" + name);
+        return id;
+    }
+
+    /**
+     * Obfuscated Material Chip internals in Maps 26.44.06, derived from the APK with
+     * tools/chip-names.py. Rerun it and update these for any other Maps version.
+     */
+    static final class ChipNames {
+        static final String DRAWABLE = "i";              // Chip's ChipDrawable
+        static final String SURFACE = "b";               // ChipDrawable chipSurfaceColor (no setter)
+        /** {ChipDrawable field, ChipDrawable setter}: background, stroke, ripple and icon tint. */
+        static final String[][] COLORS = {{"c", "l"}, {"e", "v"}, {"g", "G"}, {"T", "r"}};
+        static final String RIPPLE_REFRESH = "J";        // Chip: rebuilds its ripple after a new color
+        /** {Chip float setter, ChipDrawable field}. */
+        static final String[][] SIZES = {
+            {"setChipStrokeWidth", "f"}, {"setChipMinHeight", "d"},
+            {"setChipStartPadding", "o"}, {"setChipEndPadding", "v"},
+            {"setIconStartPadding", "p"}, {"setIconEndPadding", "q"},
+            {"setTextStartPadding", "r"}, {"setTextEndPadding", "s"}, {"setChipIconSize", "i"}
+        };
+        static final String SHAPE_GET = "ad", SHAPE_SET = "n";   // MaterialShapeDrawable
+        static final String TOUCH_TARGET = "o", TOUCH_TARGET_SET = "y";  // Chip ensureMinTouchTargetSize
+        static final String CHECKABLE_SET = "h", ICON_VISIBLE_SET = "s"; // ChipDrawable
+        static final String CLOSE_ICON_VISIBLE_SET = "x";       // Chip
+    }
+
     private static Object field(Object object, String name) throws Exception {
-        java.lang.reflect.Field f = object.getClass().getDeclaredField(name);
-        f.setAccessible(true);
-        return f.get(object);
+        for (Class<?> type = object.getClass(); type != null; type = type.getSuperclass()) {
+            try {
+                java.lang.reflect.Field f = type.getDeclaredField(name);
+                f.setAccessible(true);
+                return f.get(object);
+            } catch (NoSuchFieldException next) {}
+        }
+        throw new NoSuchFieldException(object.getClass().getName() + "." + name);
+    }
+
+    private static java.lang.reflect.Method declared(Class<?> type, String name, Class<?> param) throws Exception {
+        for (Class<?> t = type; t != null; t = t.getSuperclass()) {
+            try {
+                java.lang.reflect.Method m = t.getDeclaredMethod(name, param);
+                m.setAccessible(true);
+                return m;
+            } catch (NoSuchMethodException next) {}
+        }
+        throw new NoSuchMethodException(type.getName() + "." + name + "(" + param.getName() + ")");
+    }
+
+    /** Calls [name] on [target] or a superclass with no argument or one matching [args]. */
+    private static Object call(Object target, String name, Object... args) throws Exception {
+        for (Class<?> type = target.getClass(); type != null; type = type.getSuperclass()) {
+            for (java.lang.reflect.Method m : type.getDeclaredMethods()) {
+                Class<?>[] params = m.getParameterTypes();
+                if (!m.getName().equals(name) || params.length != args.length) continue;
+                if (args.length == 1 && !accepts(params[0], args[0])) continue;
+                m.setAccessible(true);
+                return m.invoke(target, args);
+            }
+        }
+        throw new NoSuchMethodException(target.getClass().getName() + "." + name);
+    }
+
+    private static boolean accepts(Class<?> param, Object arg) {
+        if (param == boolean.class) return arg instanceof Boolean;
+        if (param == float.class) return arg instanceof Float;
+        return !param.isPrimitive() && param.isInstance(arg);
     }
 
     private static ViewGroup findCarousel(View view) {

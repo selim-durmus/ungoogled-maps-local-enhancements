@@ -55,12 +55,13 @@ public final class LabelSuggestions {
     public static void pause(Activity a){Search s=active.remove(a);if(s!=null)s.close();}
     private static final class Search implements Runnable,TextWatcher {
         final Activity activity;final ViewGroup root;final LinearLayout header;final float density;
-        final int inputId,listId;EditText input;View list;boolean closed;String signature="";
+        final int inputId,listId,labelIcon;EditText input;View list;boolean closed;String signature="";
         int left,top,right,bottom,shift;float translation;Rect clip;
         Search(Activity a) {
             activity=a;root=(ViewGroup)a.getWindow().getDecorView();density=a.getResources().getDisplayMetrics().density;
-            inputId=a.getResources().getIdentifier("search_omnibox_edit_text","id",a.getPackageName());
-            listId=0x7f0b0d2c;header=new LinearLayout(a);header.setOrientation(LinearLayout.VERTICAL);
+            inputId=HomeWorkShortcuts.resource(a,"id","search_omnibox_edit_text");
+            labelIcon=HomeWorkShortcuts.resource(a,"drawable","ic_aliasing_nickname_black_drawable_24dp");
+            listId=HomeWorkShortcuts.resource(a,"id","typed_suggest_container");header=new LinearLayout(a);header.setOrientation(LinearLayout.VERTICAL);
             header.setBackgroundColor(0xff121212);header.setVisibility(View.GONE);
             root.addView(header,new FrameLayout.LayoutParams(-1,-2));
         }
@@ -105,7 +106,7 @@ public final class LabelSuggestions {
                     row.setPadding(dp(22),0,dp(16),0);row.setMinimumHeight(dp(58));
                     android.util.TypedValue ripple=new android.util.TypedValue();activity.getTheme().resolveAttribute(android.R.attr.selectableItemBackground,ripple,true);
                     if(ripple.resourceId!=0)row.setBackgroundResource(ripple.resourceId);
-                    ImageView icon=new ImageView(activity);icon.setImageResource(0x7f08066f);icon.setColorFilter(0xffa8c7fa);
+                    ImageView icon=new ImageView(activity);icon.setImageResource(labelIcon);icon.setColorFilter(0xffa8c7fa);
                     row.addView(icon,new LinearLayout.LayoutParams(dp(24),dp(24)));
                     LinearLayout words=new LinearLayout(activity);words.setOrientation(LinearLayout.VERTICAL);words.setPadding(dp(18),0,0,0);
                     TextView label=text(m.label,16,0xffe8eaed);label.setTypeface(null,Typeface.BOLD);words.addView(label);

@@ -15,7 +15,7 @@ private const val CONTEXT = "Landroid/content/Context;"
 
 private fun requireCompatible(ok: Boolean, reason: String) {
     if (!ok) throw PatchException("Tutto Enhancements: $reason. Use the supported Maps version with " +
-        "bearinmind patches and Offline saved places enabled; do not enable Add microG support.")
+        "bearinmind patches and Offline saved places enabled; do not enable a microG variant.")
 }
 
 private fun BytecodePatchContext.method(owner: String, name: String, result: String, vararg params: String): MutableMethod {
@@ -71,7 +71,7 @@ private fun BytecodePatchContext.hookLifecycle(helper: String) {
 
 private val maps = Compatibility(name = "Google Maps", packageName = "com.google.android.apps.maps",
     apkFileType = ApkFileType.APKM, appIconColor = 0xFFFFFF,
-    targets = listOf(AppTarget(version = "26.36.04.973607363")))
+    targets = listOf(AppTarget(version = "26.44.06.1006895251")))
 
 // Unnamed: merges our helper DEX once, whichever of the patches below are selected.
 private val tuttoExtensionPatch = bytecodePatch {
@@ -83,8 +83,8 @@ val tuttoEnhancementsPatch = bytecodePatch(
     name = "Home and Work shortcuts",
     description = "Adds Home and Work shortcut chips beside Maps' category carousel, with clean Back " +
         "navigation. Select alongside bearinmind's Offline saved places, which draws saved places, " +
-        "labels and starred places on the map. Built for bearinmind 2.5.5 and Maps " +
-        "26.36.04.973607363. Does not support Add microG support.",
+        "labels and starred places on the map. Built for bearinmind 2.9.10 and Maps " +
+        "26.44.06.1006895251. Does not support the microG variants.",
     default = true,
 ) {
     compatibleWith(maps)
@@ -104,7 +104,7 @@ val labelSuggestionsPatch = bytecodePatch(
     description = "While you type in Maps' search box, shows up to three matching Home, Work and Local saved " +
         "labels above Google's suggestions (exact, then prefix, then substring; case and accents ignored). " +
         "Tap one to open the place, or in directions to set the stop being edited. Select alongside " +
-        "bearinmind's Offline saved places. Built for bearinmind 2.5.5 and Maps 26.36.04.973607363. Does not support Add microG support.",
+        "bearinmind's Offline saved places. Built for bearinmind 2.9.10 and Maps 26.44.06.1006895251. Does not support the microG variants.",
     default = true,
 ) {
     compatibleWith(maps)

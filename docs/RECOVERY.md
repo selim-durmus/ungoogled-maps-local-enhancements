@@ -8,7 +8,7 @@ The full pipeline is:
 
 1. Verify the stock Maps APK and tool hashes against config/build-lock.json.
 2. Verify both bundles against config/morphe-source-lock.json and our bundle's source checksums.
-3. Run the preserved Morphe Desktop CLI with bearinmind 2.5.5 and Tutto Enhancements 1.5.1, using config/morphe-combined-options.json.
+3. Run the preserved Morphe Desktop CLI with bearinmind 2.9.10 and Tutto Enhancements 1.6.0, using config/morphe-combined-options.json.
 4. Apply 21 upstream patches plus our enhancement patch in FULL bytecode mode. Ad hiding is included; microG is disabled.
 5. Align, sign with the same key, and compare the output certificate with the preserved working app.
 
@@ -53,7 +53,7 @@ The guard and probe are test utilities; neither is packaged into the Android APK
 
 ## Version and source-build limits
 
-This release targets Maps 26.36.04.973607363 / 1068763346. Both the stock and baseline APKs are locked by SHA-256. Our native bindings are also version-gated. A newer Maps APK requires a reviewed port and new tests; Google service availability is outside this backup's control.
+This release targets Maps 26.44.06.1006895251 / 1068856906. Since 1.6.0 the stock build reads `inputs/maps-stock-26.44.06.apk` and `tools/morphe-desktop.jar` must be Morphe Desktop 2.2.0 (needs Java 21); copy both into the recovery kit (hashes in config/build-lock.json). The old 26.36.04 `inputs/maps-stock.apk` is only for tags up to v1.5.1. Our native bindings are also version-gated. A newer Maps APK requires a reviewed port and new tests; Google service availability is outside this backup's control.
 
 Routine stock APK builds use the two archived MPPs. Rebuilding our MPP uses build-bundle.py, the recovery tools, and the official Kotlin compiler 2.4.20 ZIP (one additional, hash-pinned download). This compiler is not in the original v1.2.0 encrypted archive. Recompiling the upstream MPP itself remains a different operation: its Gradle project uses external Gradle/Google/GitHub/JitPack dependencies and may require a GitHub Packages credential. Its full Gradle dependency cache is not part of this recovery kit. The source is preserved for future changes, but an offline rebuild of the upstream MPP from source is not claimed.
 

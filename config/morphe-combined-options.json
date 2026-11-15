@@ -1,8 +1,8 @@
 [
   {
     "meta": {
-      "source": "patches-2.5.5.mpp",
-      "sha256": "98634f24bbc0e595b38eb23d458cbcaced3a6cb16c32add9530e666d4f2eb0e8"
+      "source": "patches-2.9.10.mpp",
+      "sha256": "9c301be9563ce9f984b69300e1f23b4b0255180f03ea5ddc88ac3266e36f13ea"
     },
     "patches": {
       "120 refresh rate": {
@@ -11,7 +11,10 @@
       "Account sheet cleanup": {
         "enabled": true
       },
-      "Add microG support": {
+      "Add microG-RE support": {
+        "enabled": false
+      },
+      "Add original microG support": {
         "enabled": false
       },
       "Any media app": {
@@ -44,13 +47,25 @@
       "Flock cameras": {
         "enabled": true
       },
+      "Follow playing media": {
+        "enabled": true
+      },
       "Hide ads and clutter": {
         "enabled": true
       },
       "Legacy icon": {
         "enabled": true
       },
+      "Light map": {
+        "enabled": true
+      },
       "Location provider toggle": {
+        "enabled": true
+      },
+      "Map region": {
+        "enabled": true
+      },
+      "Media panel can be closed": {
         "enabled": true
       },
       "Offline saved places": {
@@ -74,6 +89,9 @@
       "Remove telemetry": {
         "enabled": true
       },
+      "Review counts in navigation search": {
+        "enabled": true
+      },
       "Speed cameras": {
         "enabled": true
       },
@@ -93,8 +111,8 @@
   },
   {
     "meta": {
-      "source": "tutto-enhancements-1.5.1.mpp",
-      "sha256": "b7319806387f864a5cb2477b2c9e96a225d7cd931008264704cc7b5768d10a4c"
+      "source": "tutto-enhancements-1.6.0.mpp",
+      "sha256": "922b1f1b885cda62053b38e319df6f4e3b53f8cf5d59444f84bd7da212320a39"
     },
     "patches": {
       "Home and Work shortcuts": {

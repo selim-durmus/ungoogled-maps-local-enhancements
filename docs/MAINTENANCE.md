@@ -32,6 +32,14 @@ Caption layout follows the existing frame callback and projection. It reserves s
 
 ## New Maps version
 
+Since 1.6.0 (Maps 26.44.06) the two helpers look up Maps resources by name (`HomeWorkShortcuts.resource`), so numeric IDs no longer need porting; check the names still exist with `aapt2 dump resources`. R8 also strips most public Material `Chip` setters, so `HomeWorkShortcuts.ChipNames` holds the obfuscated Chip/ChipDrawable names. For a new Maps APK run:
+
+    python tools/chip-names.py <stock-maps.apk> --dexdump <sdk>/build-tools/36.0.0/dexdump.exe
+
+and paste its output into `ChipNames`. It follows the setters that survive into ChipDrawable and fails loudly when a name is ambiguous. On 26.36.04 it reproduces the names the 1.5.1 code used. Then update the version in `morphe/TuttoEnhancements.kt`, `config/build-lock.json` and the stock input in `build-all.py`, rebuild, and run a full `build-all` patch.
+
+The table below describes the 26.36.04 bindings of the legacy `build.py`.
+
 Port these bindings before changing the version gate in `build.py`:
 
 | Binding | Current value / behavior |

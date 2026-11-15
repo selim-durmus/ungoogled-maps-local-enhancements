@@ -36,7 +36,7 @@ def main():
                          "checkout of tag v1.3.1 (git worktree add ../maps-v1.3.1 v1.3.1)")
     kit = args.recovery_root.resolve()
     lock = json.loads((ROOT / "config/build-lock.json").read_text(encoding="utf-8"))
-    source_name = "inputs/maps-" + args.source + ".apk"
+    source_name = "inputs/maps-stock-26.44.06.apk"  # baseline is refused above
     selected = [name for name in lock["files"] if not name.startswith("inputs/") or name == source_name]
     for name in selected:
         path = kit / name
@@ -47,7 +47,7 @@ def main():
         for name, expected in current["files"].items():
             if sha256(ROOT / name) != expected:
                 raise ValueError("Preserved Morphe source checksum mismatch: " + name)
-        source_manifest = json.loads((ROOT / "vendor/artifacts/tutto-enhancements-1.5.1.sources.json").read_text())
+        source_manifest = json.loads((ROOT / "vendor/artifacts/tutto-enhancements-1.6.0.sources.json").read_text())
         for name, expected in source_manifest.items():
             if sha256(ROOT / name) != expected:
                 raise ValueError("Tutto bundle is stale. Rebuild and release it after changing: " + name)
@@ -87,10 +87,10 @@ def main():
         cli = work / "tools/morphe-desktop.jar"
         cli.parent.mkdir()
         shutil.copy2(kit / "tools/morphe-desktop.jar", cli)
-        print("Applying bearinmind 2.5.5 and Tutto Enhancements together.", flush=True)
+        print("Applying bearinmind 2.9.10 and Tutto Enhancements together.", flush=True)
         run(java, "-Xmx4g", "-jar", cli, "patch",
-            "-p", ROOT / "vendor/artifacts/patches-2.5.5.mpp",
-            "-p", ROOT / "vendor/artifacts/tutto-enhancements-1.5.1.mpp",
+            "-p", ROOT / "vendor/artifacts/patches-2.9.10.mpp",
+            "-p", ROOT / "vendor/artifacts/tutto-enhancements-1.6.0.mpp",
             "--options-file", ROOT / "config/morphe-combined-options.json",
             "--bytecode-mode", "FULL", "--unsigned", "-o", unsigned,
             "-t", work / "morphe-temp", "-r", work / "morphe-result.json",

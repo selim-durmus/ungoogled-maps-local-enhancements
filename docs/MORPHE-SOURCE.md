@@ -6,7 +6,7 @@ The source publishes one MPP containing desktop JVM patch classes, Android patch
 
 `morphe/TuttoEnhancements.kt` defines two named patches, Home and Work shortcuts and Label search suggestions, each adding its helper's lifecycle hooks; an unnamed patch they both depend on merges the helper DEX once. (1.3.x also hooked map markers and label editors; bearinmind's Offline saved places now does that.) It uses a finalize block, which runs after all selected patches' execute blocks, then validates the upstream Local saved fields and methods the shortcuts use, a real native Save hook, and the microG flag before editing. It does not try to import a Kotlin dependsOn reference from a separately loaded bundle. This avoids duplicated upstream dependencies and makes the source independent of tab order for the tested upstream version.
 
-Version compatibility is restricted to original Google Maps 26.36.04.973607363. Start from the original APK/APKM, select bearinmind's Offline saved places and the other desired Ungoogled Maps patches, then select our patch. Do not feed an already enhanced APK back into the patcher. microG is intentionally rejected until separately ported/tested.
+Version compatibility is restricted to original Google Maps 26.44.06.1006895251 (Tutto 1.6.0 and later; 1.5.1 and earlier targeted 26.36.04.973607363). Start from the original APK/APKM, select bearinmind's Offline saved places and the other desired Ungoogled Maps patches, then select our patch. Do not feed an already enhanced APK back into the patcher. microG is intentionally rejected until separately ported/tested.
 
 ## Build the MPP
 
@@ -28,7 +28,7 @@ The compiler reads the patch API from the checksum-pinned Morphe Desktop JAR; th
 4. Preserve the corresponding upstream source archive and MPP. Review new upstream versions instead of following latest automatically.
 5. Audit the staged files. Publish a GitHub release with the MPP and checksums, and commit patches-bundle.json pointing to its public asset. That JSON plus patches-list.json lets Morphe discover/update this source from the existing repository.
 
-The original upstream v1.3.0 source remains under vendor/morphe-patches for the historical recovery path. Current v2.5.5 source is preserved in vendor/artifacts/morphe-patches-2.5.5-source.tar.gz at commit de89b2084387a3e69f259b5ac1c3ddae433eccec; the earlier v1.7.4 source (commit c7bd4c2630b257f695f59a5cf08b98b0b46e85d4) is kept beside it. The source archive contains upstream LICENSE/NOTICE; do not publish this fork as if it were the author's official project.
+The original upstream v1.3.0 source remains under vendor/morphe-patches for the historical recovery path. Current v2.9.10 source is preserved in vendor/artifacts/morphe-patches-2.9.10-source.tar.gz at commit 6e703cef2e0bea751052da7f610829c38ff6a251; the earlier v2.5.5 (commit de89b2084387a3e69f259b5ac1c3ddae433eccec) and v1.7.4 source (commit c7bd4c2630b257f695f59a5cf08b98b0b46e85d4) is kept beside it. The source archive contains upstream LICENSE/NOTICE; do not publish this fork as if it were the author's official project.
 
 ## Signing and data
 

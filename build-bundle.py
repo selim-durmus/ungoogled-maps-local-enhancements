@@ -15,7 +15,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build import ROOT, jar_classes, run, sha256
 
-VERSION = "1.5.1"
+VERSION = "1.6.0"
 REPO = "https://github.com/selim-durmus/ungoogled-maps-local-enhancements"
 COMPILER_SHA = "59e9ca74c7904ef2c122b12114937673ccce68de820a663f0ed66ccf8799e0b7"
 
@@ -75,7 +75,7 @@ def main():
         "Description": "Home and Work shortcuts and label search suggestions.",
         "Version": VERSION, "Source": REPO, "Author": "selim-durmus",
         "Contact": "https://github.com/selim-durmus", "Website": REPO,
-        "License": "GPLv3", "Patcher-Version": "1.15.1",
+        "License": "GPLv3", "Patcher-Version": "2.0.0",
     }
     # JAR manifests require UTF-8 lines <=72 bytes, with folded continuations.
     manifest_lines = []
