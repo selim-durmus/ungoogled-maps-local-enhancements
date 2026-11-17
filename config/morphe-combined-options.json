@@ -1,8 +1,8 @@
 [
   {
     "meta": {
-      "source": "patches-2.9.10.mpp",
-      "sha256": "9c301be9563ce9f984b69300e1f23b4b0255180f03ea5ddc88ac3266e36f13ea"
+      "source": "patches-2.10.0.mpp",
+      "sha256": "c21112f3b73a76de126965125b0564784ad78e111ceb979d472cacb9d7341d57"
     },
     "patches": {
       "120 refresh rate": {
@@ -111,8 +111,8 @@
   },
   {
     "meta": {
-      "source": "tutto-enhancements-1.6.0.mpp",
-      "sha256": "922b1f1b885cda62053b38e319df6f4e3b53f8cf5d59444f84bd7da212320a39"
+      "source": "tutto-enhancements-1.7.0.mpp",
+      "sha256": "0acfc4e57fde500953747d32f4bd0d4e08605cd3634d33c8b11350f61056d707"
     },
     "patches": {
       "Home and Work shortcuts": {

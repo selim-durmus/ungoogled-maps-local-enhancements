@@ -2,6 +2,9 @@ package tutto.patches
 
 import app.morphe.patcher.patch.*
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
+import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
+import app.morphe.patcher.util.smali.ExternalLabel
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import com.android.tools.smali.dexlib2.iface.Method
 import com.android.tools.smali.dexlib2.iface.instruction.NarrowLiteralInstruction
@@ -83,7 +86,7 @@ val tuttoEnhancementsPatch = bytecodePatch(
     name = "Home and Work shortcuts",
     description = "Adds Home and Work shortcut chips beside Maps' category carousel, with clean Back " +
         "navigation. Select alongside bearinmind's Offline saved places, which draws saved places, " +
-        "labels and starred places on the map. Built for bearinmind 2.9.10 and Maps " +
+        "labels and starred places on the map. Built for bearinmind 2.10.0 and Maps " +
         "26.44.06.1006895251. Does not support the microG variants.",
     default = true,
 ) {
@@ -101,21 +104,44 @@ val tuttoEnhancementsPatch = bytecodePatch(
 @Suppress("unused")
 val labelSuggestionsPatch = bytecodePatch(
     name = "Label search suggestions",
-    description = "While you type in Maps' search box, shows up to three matching Home, Work and Local saved " +
-        "labels above Google's suggestions (exact, then prefix, then substring; case and accents ignored). " +
-        "Tap one to open the place, or in directions to set the stop being edited. Select alongside " +
-        "bearinmind's Offline saved places. Built for bearinmind 2.9.10 and Maps 26.44.06.1006895251. Does not support the microG variants.",
+    description = "Shows your Local saved places above Maps' search suggestions: while you type, matching " +
+        "Home, Work and labels, saved places (by name, note or category) and recent places; with an empty " +
+        "search box or directions stop, Home, Work and every label. Case and accents are ignored and nothing " +
+        "is sent to Google. Tap one to open the place, or in directions to set the stop being edited. Select " +
+        "alongside bearinmind's Offline saved places. Built for bearinmind 2.10.0 and Maps 26.44.06.1006895251. " +
+        "Does not support the microG variants.",
     default = true,
 ) {
     compatibleWith(maps)
     dependsOn(tuttoExtensionPatch)
     finalize {
         checkBindings()
-        field("${UI}SavedStore;", "labels", "Ljava/util/Map;")
-        field(PLACE, "name", "Ljava/lang/String;"); field(PLACE, "ftid", "Ljava/lang/String;")
-        // A tapped label is submitted through Maps' search box; these turn it into the place.
+        val store = "${UI}SavedStore;"
+        field(store, "labels", "Ljava/util/Map;"); field(store, "lists", "Ljava/util/Map;")
+        field(store, "places", "Ljava/util/Map;")
+        for (name in listOf("name", "ftid", "note", "category")) field(PLACE, name, "Ljava/lang/String;")
+        field(PLACE, "lists", "Ljava/util/Set;")
+        method(PLACE, "located", "Z"); method(PLACE, "<init>", "V")
+        val history = "${UI}HistoryStore;"
+        val entry = "${UI}HistoryStore\$Entry;"
+        method(history, "enabled", "Z", CONTEXT); method(history, "load", "V", CONTEXT)
+        method(history, "newestFirst", "Ljava/util/List;")
+        for (name in listOf("ftid", "name", "category")) field(entry, name, "Ljava/lang/String;")
+        field(entry, "lat", "D"); field(entry, "lng", "D")
+        // A tapped row is submitted through Maps' search box; these turn its text into the place.
         method("${UI}SavedPlaces;", "searchLabel", "Z", "Ljava/lang/String;")
         method("${UI}SavedPlaces;", "labelWaypoint", "V", "Ljava/lang/Object;", "Ljava/lang/String;")
-        hookLifecycle("${UI}LabelSuggestions;")
+        // Both look the text up here: a saved or recent place just tapped answers first.
+        val labelled = method(store, "labelled", PLACE, "Ljava/lang/String;")
+        val helper = "${UI}LabelSuggestions;"
+        requireCompatible(!labelled.calls(helper), "The input already contains our enhancements; start from the original APK")
+        requireCompatible((labelled.implementation?.registerCount ?: 0) > 1, "Required method changed: $store->labelled")
+        labelled.addInstructionsWithLabels(0, """
+            invoke-static {p0}, $helper->picked(Ljava/lang/String;)$PLACE
+            move-result-object v0
+            if-eqz v0, :original
+            return-object v0
+        """, ExternalLabel("original", labelled.getInstruction(0)))
+        hookLifecycle(helper)
     }
 }

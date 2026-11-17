@@ -1,9 +1,9 @@
 {
-    "version": "1.6.0",
+    "version": "1.7.0",
     "patches": [
         {
             "name": "Home and Work shortcuts",
-            "description": "Adds Home and Work shortcut chips beside Maps' category carousel, with clean Back navigation. Select alongside bearinmind's Offline saved places, which draws saved places, labels and starred places on the map. Built for bearinmind 2.9.10 and Maps 26.44.06.1006895251. Does not support the microG variants.",
+            "description": "Adds Home and Work shortcut chips beside Maps' category carousel, with clean Back navigation. Select alongside bearinmind's Offline saved places, which draws saved places, labels and starred places on the map. Built for bearinmind 2.10.0 and Maps 26.44.06.1006895251. Does not support the microG variants.",
             "default": true,
             "category": null,
             "dependencies": [],
@@ -30,7 +30,7 @@
         },
         {
             "name": "Label search suggestions",
-            "description": "While you type in Maps' search box, shows up to three matching Home, Work and Local saved labels above Google's suggestions (exact, then prefix, then substring; case and accents ignored). Tap one to open the place, or in directions to set the stop being edited. Select alongside bearinmind's Offline saved places. Built for bearinmind 2.9.10 and Maps 26.44.06.1006895251. Does not support the microG variants.",
+            "description": "Shows your Local saved places above Maps' search suggestions: while you type, matching Home, Work and labels, saved places (by name, note or category) and recent places; with an empty search box or directions stop, Home, Work and every label. Case and accents are ignored and nothing is sent to Google. Tap one to open the place, or in directions to set the stop being edited. Select alongside bearinmind's Offline saved places. Built for bearinmind 2.10.0 and Maps 26.44.06.1006895251. Does not support the microG variants.",
             "default": true,
             "category": null,
             "dependencies": [],

@@ -89,6 +89,7 @@ public final class HomeWorkShortcuts {
         boolean clip, closed;
         SavedStore.Place lastHome, lastWork;
         int lastInk, lastHeight;
+        boolean loggedFallback;
         final int[] origin = new int[2], anchor = new int[2];
         // Looked up by name: numeric resource IDs change with every Maps release.
         final int containerId, navId, modeTabsId, queryId, clearId, homeIcon, workIcon, chipText;
@@ -193,10 +194,107 @@ public final class HomeWorkShortcuts {
             chips.setVisibility(View.VISIBLE);
         }
 
-        void addChip(String label, SavedStore.Place destination, boolean work, int ink, int height, TextView sample) throws Exception {
-            // Use Maps' own Material Chip and live style values, not a copied background bitmap
-            // or a handmade rounded rectangle. R8 strips most of Chip's public setters, so the
-            // style goes through obfuscated names pinned to 26.44.06 (see ChipNames).
+        void addChip(String label, SavedStore.Place destination, boolean work, int ink, int height, TextView sample) {
+            TextView button = null;
+            if (ChipNames.applies(activity)) {
+                try { button = materialChip(work, sample); }
+                catch (Throwable error) {
+                    // Wrong names for this build: fall back instead of losing the shortcuts.
+                    if (!loggedFallback) android.util.Log.w("UA-HomeWork", "Pinned chip style failed; using a copy of Maps' chip background", error);
+                    loggedFallback = true;
+                }
+            }
+            if (button == null) button = plainChip(work, ink, sample, height);
+            button.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, sample.getTextSize());
+            button.setTypeface(sample.getTypeface());
+            button.setTextColor(sample.getTextColors());
+            button.setLetterSpacing(sample.getLetterSpacing());
+            button.setIncludeFontPadding(sample.getIncludeFontPadding());
+            button.setFontFeatureSettings(sample.getFontFeatureSettings());
+            String variation = sample.getFontVariationSettings();
+            if (variation != null) button.setFontVariationSettings(variation);
+            button.setElevation(sample.getElevation());
+            button.setText(label);
+            button.setContentDescription("Directions to " + label);
+            button.setClickable(true);
+            button.setFocusable(true);
+            button.setOnClickListener(v -> openShortcut(activity, destination));
+            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, height);
+            int gap = dp(6);
+            if (carousel.getChildCount() >= 2) {
+                int measured = carousel.getChildAt(1).getLeft() - carousel.getChildAt(0).getRight();
+                if (measured > 0 && measured < dp(24)) gap = measured;
+            }
+            p.setMarginEnd(gap);
+            chips.addView(button, p);
+        }
+
+        /**
+         * Any Maps version: a plain TextView whose background is measured from the category chip
+         * as drawn (fill, outline, corner radius and touch-target insets) and whose icon is tinted
+         * like the chip's text. No obfuscated names involved.
+         */
+        TextView plainChip(boolean work, int ink, TextView sample, int height) {
+            TextView button = new TextView(sample.getContext());
+            android.graphics.drawable.Drawable background = null;
+            try { background = measuredBackground(sample, height); }
+            catch (Throwable error) { android.util.Log.w("UA-HomeWork", "Could not measure the category chip", error); }
+            if (background == null) {
+                android.graphics.drawable.GradientDrawable pill = new android.graphics.drawable.GradientDrawable();
+                pill.setCornerRadius(dp(8));
+                pill.setStroke(dp(1), (ink & 0x00ffffff) | 0x55000000);
+                background = new android.graphics.drawable.InsetDrawable(pill, 0, dp(6), 0, dp(6));
+            }
+            button.setBackground(background);
+            android.graphics.drawable.Drawable icon = activity.getDrawable(work ? workIcon : homeIcon);
+            if (icon != null) {
+                icon = icon.mutate();
+                icon.setTint(ink);
+                icon.setBounds(0, 0, dp(18), dp(18));
+                button.setCompoundDrawablesRelative(icon, null, null, null);
+                button.setCompoundDrawablePadding(dp(8));
+            }
+            button.setTextAppearance(chipText);
+            button.setGravity(Gravity.CENTER_VERTICAL);
+            button.setSingleLine(true);
+            button.setPaddingRelative(dp(12), 0, dp(16), 0);
+            return button;
+        }
+
+        /** Draws [sample]'s background off screen and rebuilds it as a rounded rectangle for a view [height] tall. */
+        android.graphics.drawable.Drawable measuredBackground(TextView sample, int height) {
+            android.graphics.drawable.Drawable source = sample.getBackground();
+            int w = sample.getWidth(), h = sample.getHeight();
+            if (source == null || w < dp(24) || h < dp(16)) return null;
+            android.graphics.Bitmap bitmap = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888);
+            android.graphics.Rect bounds = source.copyBounds();
+            source.setBounds(0, 0, w, h);
+            source.draw(new android.graphics.Canvas(bitmap));
+            source.setBounds(bounds);
+            int x = w / 2, top = -1, bottom = -1;
+            for (int y = 0; y < h; y++)
+                if (android.graphics.Color.alpha(bitmap.getPixel(x, y)) > 8) { if (top < 0) top = y; bottom = y; }
+            if (top < 0 || bottom - top < dp(12)) { bitmap.recycle(); return null; }
+            int middle = (top + bottom) / 2, left = -1;
+            for (int i = 0; i < x && left < 0; i++) if (android.graphics.Color.alpha(bitmap.getPixel(i, middle)) > 8) left = i;
+            int corner = left;
+            for (int i = Math.max(0, left); i < x; i++) if (android.graphics.Color.alpha(bitmap.getPixel(i, top)) > 8) { corner = i; break; }
+            int fill = bitmap.getPixel(x, middle), edge = bitmap.getPixel(x, top);
+            bitmap.recycle();
+            android.graphics.drawable.GradientDrawable pill = new android.graphics.drawable.GradientDrawable();
+            pill.setColor(fill);
+            if (edge != fill) pill.setStroke(Math.max(1, dp(1)), edge);
+            pill.setCornerRadius(Math.max(dp(2), corner - Math.max(0, left) + 1));
+            int insetTop = top + (height - h) / 2, insetBottom = (h - 1 - bottom) + (height - h + 1) / 2;
+            return new android.graphics.drawable.InsetDrawable(pill, 0, Math.max(0, insetTop), 0, Math.max(0, insetBottom));
+        }
+
+        /**
+         * Maps 26.44.06: Maps' own Material Chip with the category chip's live style values. R8
+         * strips most of Chip's public setters, so the style goes through obfuscated names pinned
+         * to that build (see ChipNames).
+         */
+        TextView materialChip(boolean work, TextView sample) throws Exception {
             Class<?> chipClass = Class.forName("com.google.android.material.chip.Chip");
             if (!chipClass.isInstance(sample)) throw new IllegalStateException("Unsupported category chip");
             TextView button = (TextView) chipClass.getConstructor(android.content.Context.class).newInstance(sample.getContext());
@@ -218,29 +316,8 @@ public final class HomeWorkShortcuts {
             chipClass.getMethod("setChipIconResource", int.class).invoke(button, work ? workIcon : homeIcon);
             call(target, ChipNames.ICON_VISIBLE_SET, true);
             button.setTextAppearance(chipText);
-            button.setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, sample.getTextSize());
-            button.setTypeface(sample.getTypeface());
-            button.setTextColor(sample.getTextColors());
-            button.setLetterSpacing(sample.getLetterSpacing());
-            button.setIncludeFontPadding(sample.getIncludeFontPadding());
             button.setGravity(sample.getGravity());
-            button.setFontFeatureSettings(sample.getFontFeatureSettings());
-            String variation = sample.getFontVariationSettings();
-            if (variation != null) button.setFontVariationSettings(variation);
-            button.setElevation(sample.getElevation());
-            button.setText(label);
-            button.setContentDescription("Directions to " + label);
-            button.setClickable(true);
-            button.setFocusable(true);
-            button.setOnClickListener(v -> openShortcut(activity, destination));
-            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, height);
-            int gap = dp(6);
-            if (carousel.getChildCount() >= 2) {
-                int measured = carousel.getChildAt(1).getLeft() - carousel.getChildAt(0).getRight();
-                if (measured > 0 && measured < dp(24)) gap = measured;
-            }
-            p.setMarginEnd(gap);
-            chips.addView(button, p);
+            return button;
         }
 
         void updateShortcutReturn() {
@@ -299,9 +376,19 @@ public final class HomeWorkShortcuts {
 
     /**
      * Obfuscated Material Chip internals in Maps 26.44.06, derived from the APK with
-     * tools/chip-names.py. Rerun it and update these for any other Maps version.
+     * tools/chip-names.py. Used only on that build (by version code); any other Maps version gets
+     * the name-free plainChip. Rerun the script and update these together with MAPS_VERSION_CODE.
      */
     static final class ChipNames {
+        static final long MAPS_VERSION_CODE = 1068856906L;  // 26.44.06.1006895251
+        /** Testing: `adb shell setprop log.tag.UA-ChipFallback DEBUG` forces the name-free chip. */
+        static boolean applies(Activity activity) {
+            if (android.util.Log.isLoggable("UA-ChipFallback", android.util.Log.DEBUG)) return false;
+            try {
+                return activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).getLongVersionCode()
+                        == MAPS_VERSION_CODE;
+            } catch (Throwable error) { return false; }
+        }
         static final String DRAWABLE = "i";              // Chip's ChipDrawable
         static final String SURFACE = "b";               // ChipDrawable chipSurfaceColor (no setter)
         /** {ChipDrawable field, ChipDrawable setter}: background, stroke, ripple and icon tint. */

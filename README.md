@@ -3,7 +3,7 @@
 A local extension for [bearinmindcat/morphe-patches](https://github.com/bearinmindcat/morphe-patches) with two independent patches:
 
 - **Home and Work shortcuts**: native Home and Work chips beside Maps' category carousel. A shortcut opens directions to the destination saved in Local saved and, on Back, clears its temporary coordinate selection.
-- **Label search suggestions**: while you type in Maps' search box, up to three matching Home, Work and Local saved labels appear above Google's suggestions. Tap one to open the place; in the directions editor, it sets only the start or stop you are editing.
+- **Label search suggestions**: your Local saved places above Google's suggestions. While you type: matching Home, Work and labels, saved places (by name, or by note and category) and recent places. With an empty search box or directions stop: Home, Work and every label, one tap away. Tap one to open the place; in the directions editor, it sets only the start or stop you are editing.
 
 This repository is also a **Morphe patch source named Tutto Enhancements**. Its MPP adds these patches alongside bearinmind's patches in one patching run. The repository preserves both compiled bundles, upstream source, our source, and an offline PC build process.
 
@@ -26,7 +26,7 @@ Upstream matches a label only when the whole label is submitted. Since 1.5.0, **
 3. Under **Tutto Enhancements**, select **Home and Work shortcuts** and/or **Label search suggestions**. (1.3.x had a single "Home, Work, markers and labels" patch.)
 4. Patch once. Use the same signing key and package name as your installed app to update without uninstalling.
 
-Built for bearinmind **2.9.10** and Morphe Manager **2.6.0** / Desktop **2.2.0** (Patcher 2.x). The patch validates the upstream code it needs after all patch execution blocks have run; tab order does not establish dependencies. Missing Local saved support and the microG variants fail with a clear message. 1.6.0 ports both patches to Maps 26.44.06, the only version bearinmind 2.9.x supports: Maps resources are now looked up by name, and Material Chip's obfuscated internals come from `tools/chip-names.py`. Future upstream releases still need compatibility review.
+Built for bearinmind **2.10.0** and Morphe Manager **2.6.0** / Desktop **2.2.0** (Patcher 2.x). The patch validates the upstream code it needs after all patch execution blocks have run; tab order does not establish dependencies. Missing Local saved support and the microG variants fail with a clear message. 1.6.0 ports both patches to Maps 26.44.06, the only version bearinmind 2.9.x supports: Maps resources are now looked up by name, and Material Chip's obfuscated internals come from `tools/chip-names.py`. Since 1.7.0 those names are used only on that exact Maps build; on any other build, or if they fail, the chips are drawn from measurements of Maps' own category chip instead of disappearing. A daily GitHub Action (`bearinmind watch`) checks each new bearinmind release with `tools/check-upstream.py` and opens an issue when it changes the Maps version, drops something our patches call, or adds a Maps patch that might overlap ours.
 
 The patch source contains no signing key, Google APK, or saved places. A fresh Morphe installation may have a different key; do not uninstall your current Maps app to bypass a signing conflict. See [Morphe source and development](docs/MORPHE-SOURCE.md).
 
@@ -38,7 +38,7 @@ Run from the cloned repository in PowerShell:
 
     .\build-all.ps1 -RecoveryRoot 'D:\Maps Recovery\recovery-kit'
 
-The script verifies pinned input/tool hashes, applies bearinmind 2.9.10's default Maps patches plus Tutto Enhancements, signs the result, and prints its location under dist. Ad hiding is included. No system-wide Java, Python, Android SDK or Morphe Manager installation is needed. No files are downloaded and no phone is modified. Changed feature source requires rebuilding the Tutto MPP before this command will proceed.
+The script verifies pinned input/tool hashes, applies the locked bearinmind release's default Maps patches plus Tutto Enhancements (versions in config/morphe-source-lock.json; `tools/refresh-locks.py` updates them), signs the result, and prints its location under dist. Ad hiding is included. No system-wide Java, Python, Android SDK or Morphe Manager installation is needed. No files are downloaded and no phone is modified. Changed feature source requires rebuilding the Tutto MPP before this command will proceed.
 
 The legacy upstream v1.3.0 baseline path (`-From baseline`) needs our own markers and labels, so it now runs only from a checkout of tag `v1.3.1`.
 
@@ -57,7 +57,7 @@ See [Recovery and Morphe workflow](docs/RECOVERY.md) for archive contents, fresh
 - On Back from a shortcut route, dismisses only the matching temporary coordinate selection using Maps' native clear action.
 - Preserves ordinary search and active navigation; adds no network client.
 
-Label search suggestions reads Home, Work and labels from Local saved and draws a "Your labels" block above the native suggestion list while the search box has focus. Matching ignores case, accents and extra spaces; exact matches come first, then prefixes and substrings, at most three rows. If a landscape keyboard leaves too little room, dismiss it to see the rows. It adds no network client, but the native search field still runs Google's ordinary autocomplete: text typed there may be sent to Google.
+Label search suggestions reads Local saved (Home, Work, labels, saved lists) and, when "Remember places I look at" is on, recent places, and draws a block above the native suggestion list while the search box has focus. Matching ignores case, accents and extra spaces; exact matches come first, then prefixes, word starts and substrings, then notes and categories (two letters or more), at most four rows while typing and six for an empty box. A tapped saved or recent place is submitted through the search box like a label: `SavedStore.labelled` is patched to answer with the place just tapped, so bearinmind's own label handling opens it or sets the directions stop. If a landscape keyboard leaves too little room, dismiss it to see the rows. It adds no network client, but the native search field still runs Google's ordinary autocomplete: text typed there may be sent to Google.
 
 The `v1.0.0` tag preserves the original Home/Work-only checkpoint; 1.4.0 and later ship the same `HomeWorkShortcuts.java`. Tags `v1.1.0` to `v1.3.1` hold the markers and labels that bearinmind's patch now replaces.
 
@@ -67,7 +67,7 @@ The `v1.0.0` tag preserves the original Home/Work-only checkpoint; 1.4.0 and lat
 | --- | --- |
 | Maps | `26.44.06.1006895251` / version code `1068856906` |
 | Package | `org.ungoogled.android.apps.maps` |
-| Upstream patches | v2.9.10 for stock builds; v1.3.0 for the legacy baseline path (tag v1.3.1) |
+| Upstream patches | v2.10.0 for stock builds; v1.3.0 for the legacy baseline path (tag v1.3.1) |
 | Java | JDK 17; helper targets Java 8 |
 | Python | 3.11+; standard library only |
 | Android SDK | Platform 36, Build Tools 36.0.0 |

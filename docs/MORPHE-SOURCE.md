@@ -28,7 +28,7 @@ The compiler reads the patch API from the checksum-pinned Morphe Desktop JAR; th
 4. Preserve the corresponding upstream source archive and MPP. Review new upstream versions instead of following latest automatically.
 5. Audit the staged files. Publish a GitHub release with the MPP and checksums, and commit patches-bundle.json pointing to its public asset. That JSON plus patches-list.json lets Morphe discover/update this source from the existing repository.
 
-The original upstream v1.3.0 source remains under vendor/morphe-patches for the historical recovery path. Current v2.9.10 source is preserved in vendor/artifacts/morphe-patches-2.9.10-source.tar.gz at commit 6e703cef2e0bea751052da7f610829c38ff6a251; the earlier v2.5.5 (commit de89b2084387a3e69f259b5ac1c3ddae433eccec) and v1.7.4 source (commit c7bd4c2630b257f695f59a5cf08b98b0b46e85d4) is kept beside it. The source archive contains upstream LICENSE/NOTICE; do not publish this fork as if it were the author's official project.
+The original upstream v1.3.0 source remains under vendor/morphe-patches for the historical recovery path. Current v2.10.0 source is preserved in vendor/artifacts/morphe-patches-2.10.0-source.tar.gz at commit 1df254204b2ce5c1ac1c6ac73ee94c5ed5defb44 (v2.9.10, commit 6e703cef2e0bea751052da7f610829c38ff6a251, is kept for 1.6.0); the earlier v2.5.5 (commit de89b2084387a3e69f259b5ac1c3ddae433eccec) and v1.7.4 source (commit c7bd4c2630b257f695f59a5cf08b98b0b46e85d4) is kept beside it. The source archive contains upstream LICENSE/NOTICE; do not publish this fork as if it were the author's official project.
 
 ## Signing and data
 

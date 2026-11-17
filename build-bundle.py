@@ -15,7 +15,7 @@ import zipfile
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from build import ROOT, jar_classes, run, sha256
 
-VERSION = "1.6.0"
+VERSION = "1.7.0"
 REPO = "https://github.com/selim-durmus/ungoogled-maps-local-enhancements"
 COMPILER_SHA = "59e9ca74c7904ef2c122b12114937673ccce68de820a663f0ed66ccf8799e0b7"
 
@@ -50,8 +50,8 @@ def main():
     run(javac, "-encoding", "UTF-8", "--release", "8", "-cp", android, "-d", classes, *sources)
     run(java, "-cp", str(classes) + os.pathsep + str(android), "org.ungoogled.ui.RouteGuardTest")
     run(java, "-cp", classes, "org.ungoogled.ui.LabelIndexTest")
-    jar_classes(work / "helpers.jar", classes, "HomeWorkShortcuts*.class|LabelSuggestions*.class|LabelIndex.class")
-    jar_classes(work / "stubs.jar", classes, "Saved*.class")
+    jar_classes(work / "helpers.jar", classes, "HomeWorkShortcuts*.class|LabelSuggestions*.class|LabelIndex*.class")
+    jar_classes(work / "stubs.jar", classes, "Saved*.class|History*.class")
     extension = work / "extension"
     extension.mkdir()
     run(java, "-cp", d8, "com.android.tools.r8.D8", "--min-api", "32", "--lib", android,
@@ -72,7 +72,7 @@ def main():
         "--classpath", api, "--output", patch_dex, work / "patch.jar")
     manifest = {
         "Manifest-Version": "1.0", "Name": "Tutto Enhancements",
-        "Description": "Home and Work shortcuts and label search suggestions.",
+        "Description": "Home and Work shortcuts and local search suggestions.",
         "Version": VERSION, "Source": REPO, "Author": "selim-durmus",
         "Contact": "https://github.com/selim-durmus", "Website": REPO,
         "License": "GPLv3", "Patcher-Version": "2.0.0",

@@ -20,7 +20,7 @@ For label support also inspect the following bindings. SavedStore.labels maps al
 
 Three label entry points are redirected: atqq.a(bcio) delegates via atqs.a (Activity) and atqs.l (awvj selected place); the label branch of areb.onClick delegates via atlg.a (Activity) and areb.c (awvj); YouActivity.labelDialog delegates to the shared editor. Unrecognized native models fall through to the original action. Unwrap awvj.a() to oku, then use oku.bz()/p()/q() for name/feature ID/coordinates and SavedPlaces.place for conversion. Resolve an existing saved/label record by identity before editing to retain its original display name. Native chip titles are not rewritten.
 
-The search controller follows search_omnibox_edit_text and typed_suggest_container (0x7f0b0d2c). It places up to three ranked local rows above native suggestions by temporarily translating/clipping/padding the native list. Original layout is restored on empty/no match, view replacement, selection and pause. Polling at 150 ms handles native subtree replacements; text changes also schedule an immediate refresh. Native autocomplete continues to receive the query. Search and captions use fixed dark-map colors.
+The search controller follows search_omnibox_edit_text and typed_suggest_container, or, with an empty box, the `recycler_view` directly below search_omnibox_container (main search and directions editor). It places up to four (six when empty) ranked local rows above native suggestions by temporarily translating/clipping/padding the native list. Original layout is restored on empty/no match, view replacement, selection and pause. Polling at 150 ms handles native subtree replacements; text changes also schedule an immediate refresh. Native autocomplete continues to receive the query. Search and captions use fixed dark-map colors.
 
 Caption layout follows the existing frame callback and projection. It reserves space around local markers, native controls and earlier captions; it cannot inspect Google's internal text collision layout. Clustered labels appear in the chooser, with individual captions after zooming in. Marker contents refresh once per second.
 
@@ -35,6 +35,12 @@ Caption layout follows the existing frame callback and projection. It reserves s
 Since 1.6.0 (Maps 26.44.06) the two helpers look up Maps resources by name (`HomeWorkShortcuts.resource`), so numeric IDs no longer need porting; check the names still exist with `aapt2 dump resources`. R8 also strips most public Material `Chip` setters, so `HomeWorkShortcuts.ChipNames` holds the obfuscated Chip/ChipDrawable names. For a new Maps APK run:
 
     python tools/chip-names.py <stock-maps.apk> --dexdump <sdk>/build-tools/36.0.0/dexdump.exe
+
+and update `ChipNames` together with `ChipNames.MAPS_VERSION_CODE`. Until then the chips use the name-free fallback (`plainChip`), which measures Maps' category chip as drawn. To see the fallback on the pinned build: `adb shell setprop log.tag.UA-ChipFallback DEBUG`, restart Maps; clear it with `setprop log.tag.UA-ChipFallback ''`.
+
+Test data: `tests/fixtures/local-saved-calgary.json` is a Local saved backup with Home, Work, labels, lists, notes and categories (public places, fictional assignments). Import it on a test device through Local saved > Import.
+
+New bearinmind release: `.github/workflows/bearinmind-watch.yml` runs `tools/check-upstream.py` daily (bindings listed in `config/upstream-bindings.json`; keep them in sync with `TuttoEnhancements.kt`). To move to a release: download its `patches-X.mpp` and source archive into vendor/artifacts, rebuild the Tutto MPP, then `python tools/refresh-locks.py --tutto <v> --upstream <X> --upstream-commit <sha>` and run build-all.
 
 and paste its output into `ChipNames`. It follows the setters that survive into ChipDrawable and fails loudly when a name is ambiguous. On 26.36.04 it reproduces the names the 1.5.1 code used. Then update the version in `morphe/TuttoEnhancements.kt`, `config/build-lock.json` and the stock input in `build-all.py`, rebuild, and run a full `build-all` patch.
 
